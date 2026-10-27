@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// Security rules for Big Payrolls.
+// - Clients can only read and write their own profile and their own requests.
+// - Clients can never make themselves admin, set a price, or record payments.
+// - A client may only accept a quote or ask for changes while it is "quote_sent".
+// - Admins (users/{uid}.role == "admin", set by hand in the Firebase console) can read and update everything.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == 'client'
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100;
+
+      // A client may edit their profile but never their role.
+      allow update: if (signedIn() && request.auth.uid == uid
+          && request.resource.data.role == resource.data.role)
+        || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    match /requests/{requestId} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+
+      // New requests start as "submitted" with no quote, updates or payments.
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'submitted'
+        && !('quote' in request.resource.data)
+        && !('payments' in request.resource.data)
+        && !('updates' in request.resource.data)
+        && request.resource.data.services is list
+        && request.resource.data.services.size() > 0
+        && request.resource.data.services.size() <= 20;
+
+      // Client: accept the quote or ask for changes, nothing else.
+      allow update: if isAdmin() || (
+        signedIn()
+        && resource.data.uid == request.auth.uid
+        && resource.data.status == 'quote_sent'
+        && request.resource.data.status in ['quote_accepted', 'changes_requested']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'clientResponse', 'updatedAt'])
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Private team notes per request. Never visible to clients.
+    match /internal/{requestId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
