@@ -6,7 +6,7 @@ export const site = {
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || '',
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '',
-  address: 'No. 27, Abhilasha, 1st Main, 1st Cross, Ekadhanthanaga, Herohalli, Bangalore North, Bengaluru 560091, Karnataka',
+  address: '',
   cin: 'U78100KA2025PTC205573',
   gstin: '',
 };
