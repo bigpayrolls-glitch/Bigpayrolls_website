@@ -130,7 +130,7 @@ try {
   (await client.getByText('Thanks Ravi!').count()) > 0 ? ok('client sees admin update') : bad('client update missing');
   await shot(client, 'client-sees-quote');
   await client.getByRole('button', { name: 'Accept quote' }).click();
-  await client.getByText('Advance due:').waitFor({ timeout: 15000 });
+  await client.getByText('Advance due now').waitFor({ timeout: 15000 });
   ok('client accepted quote and sees advance due');
   await shot(client, 'client-accepted');
   (await client.getByAltText(/UPI QR code/).count()) > 0 ? ok('client sees UPI QR code') : bad('UPI QR missing');
