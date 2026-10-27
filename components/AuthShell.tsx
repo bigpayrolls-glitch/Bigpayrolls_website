@@ -22,8 +22,8 @@ export default function AuthShell({
   const numbered = side === 'brand';
   const photo = numbered ? photos.heroTeam : photos.supportCall;
   return (
-    <div className="flex min-h-screen flex-wrap overflow-x-clip bg-cream">
-      <aside className="relative isolate flex flex-[1_1_440px] flex-col justify-between gap-6 overflow-hidden bg-ink px-6 py-7 text-white sm:gap-10 sm:p-12 lg:min-h-screen">
+    <div className="min-h-screen overflow-x-clip bg-cream lg:grid lg:h-screen lg:grid-cols-[minmax(400px,42%)_1fr] lg:overflow-hidden">
+      <aside className="relative isolate flex flex-col gap-5 overflow-hidden bg-ink px-6 py-7 text-white sm:px-10 sm:py-9 lg:h-screen">
         {photo && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photo} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full object-cover opacity-40" />
@@ -41,32 +41,32 @@ export default function AuthShell({
 
         <Link href="/" aria-label="Back to Big Payrolls home" className="self-start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-horizontal-white.png" alt="Big Payrolls Solution Private Limited" className="h-10 w-auto sm:h-14" />
+          <img src="/logo-horizontal-white.png" alt="Big Payrolls Solution Private Limited" className="h-10 w-auto sm:h-12" />
         </Link>
 
-        <div className="flex max-w-[470px] flex-col gap-4 sm:gap-7">
+        <div className="flex max-w-[460px] flex-col gap-4 lg:flex-1 lg:justify-center lg:gap-5">
           <span className="hidden items-center gap-2 self-start rounded-full border border-white/15 sm:inline-flex bg-white/10 px-3.5 py-1.5 text-[13px] font-medium backdrop-blur">
             <Sparkle size={14} className="text-brand" />
             Client portal
           </span>
-          <h1 className="font-display text-3xl font-bold leading-[1.06] tracking-[-0.03em] sm:text-[46px]">
+          <h1 className="font-display text-3xl font-bold leading-[1.06] tracking-[-0.03em] sm:text-[40px]">
             {title.split(' ').slice(0, -2).join(' ')}{' '}
             <span className="bg-gradient-to-r from-[#FDB813] via-[#F9A11B] to-[#FF7A45] bg-clip-text text-transparent">
               {title.split(' ').slice(-2).join(' ')}
             </span>
           </h1>
-          <ul className="hidden flex-col gap-3 lg:flex">
+          <ul className="hidden flex-col gap-2.5 lg:flex">
             {points.map((p, i) => (
               <li
                 key={p.t}
-                className="flex items-start gap-3.5 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 backdrop-blur-md"
+                className="flex items-center gap-3.5 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 backdrop-blur-md"
               >
-                <span className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-to-br from-[#FDB813] to-[#F7931E] font-display text-sm font-bold text-ink">
+                <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-to-br from-[#FDB813] to-[#F7931E] font-display text-sm font-bold text-ink">
                   {numbered ? i + 1 : <Check size={15} />}
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="text-[15px] font-semibold">{p.t}</span>
-                  {p.d && <span className="text-sm text-white/70">{p.d}</span>}
+                  {p.d && <span className="text-[13px] text-white/65">{p.d}</span>}
                 </span>
               </li>
             ))}
@@ -85,15 +85,17 @@ export default function AuthShell({
         </div>
       </aside>
 
-      <main className="relative flex flex-[1_1_540px] min-w-0 items-center justify-center px-5 py-10 sm:px-8 sm:py-14">
+      <main className="relative min-w-0 lg:h-screen lg:overflow-y-auto">
         <div aria-hidden="true" className="ai-glow -right-20 -top-20 h-72 w-72 opacity-40" />
-        <div className="relative flex w-full max-w-[560px] flex-col gap-6 rounded-[32px] border border-sand bg-white p-6 shadow-[0_2px_6px_rgba(60,30,0,0.05),0_30px_60px_-30px_rgba(120,60,0,0.25)] sm:p-10">
+        <div className="relative flex min-h-full items-center justify-center px-4 py-4 sm:px-8">
+        <div className="relative flex w-full max-w-[540px] flex-col gap-3.5 rounded-[28px] border border-sand bg-white p-6 shadow-[0_2px_6px_rgba(60,30,0,0.05),0_30px_60px_-30px_rgba(120,60,0,0.25)] sm:px-8 sm:py-7">
           {!isFirebaseConfigured && (
             <p role="status" className="rounded-2xl border border-[#F1E2C8] bg-peach px-4 py-3 text-sm">
               Login is not connected yet. Add your Firebase keys in <code>.env.local</code> (see README) to turn on sign in and sign up.
             </p>
           )}
           {children}
+        </div>
         </div>
       </main>
     </div>
