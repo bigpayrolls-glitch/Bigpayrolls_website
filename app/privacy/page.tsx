@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import LegalPage from '@/components/LegalPage';
-import { site } from '@/lib/site';
+import { contactLine, site } from '@/lib/site';
 
 export const metadata: Metadata = { title: 'Privacy policy' };
 
@@ -38,12 +38,14 @@ export default function Privacy() {
       </p>
       <h2>Your choices</h2>
       <p>
-        You can ask us to see, correct or delete your information by writing to {site.email}. We will respond within a reasonable
+        You can ask us to see, correct or delete your information by contacting us {contactLine()}. We will respond within a reasonable
         time.
       </p>
       <h2>Contact</h2>
       <p>
-        {site.legalName}, {site.address}. Email: {site.email}. Phone: {site.phone}.
+        {site.legalName}
+        {site.address ? `, ${site.address}` : ''}. Contact us {contactLine()}
+        {site.phone ? `, or call ${site.phone}` : ''}.
       </p>
     </LegalPage>
   );

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import LegalPage from '@/components/LegalPage';
-import { site } from '@/lib/site';
+import { contactLine } from '@/lib/site';
 
 export const metadata: Metadata = { title: 'Refund and cancellation policy' };
 
@@ -25,7 +25,7 @@ export default function Refund() {
       <p>Approved refunds are paid to the original payment method within 7–10 working days.</p>
       <h2>Contact</h2>
       <p>
-        To request a cancellation or refund, write to {site.email} with your registered email and request details.
+        To request a cancellation or refund, contact us {contactLine()} with your registered email and request details.
       </p>
     </LegalPage>
   );

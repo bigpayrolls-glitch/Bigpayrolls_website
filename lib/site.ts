@@ -2,13 +2,18 @@ export const site = {
   name: 'Big Payrolls',
   legalName: 'Big Payrolls Solution Private Limited',
   domain: 'bigpayrolls.com',
-  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || '[Phone number]',
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '[Email address]',
+  // Leave empty until ready: empty values are simply not shown on the site.
+  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || '',
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '',
-  address: '[Office address]',
-  cin: '[Your CIN]',
-  gstin: '[Your GSTIN]',
+  address: '',
+  cin: '',
+  gstin: '',
 };
+
+/** How to reach us in policy text: the email if set, otherwise the website. */
+export const contactLine = () =>
+  site.email ? `by email at ${site.email}` : 'through the contact options on bigpayrolls.com or your client dashboard';
 
 /**
  * Photos for the website. Put a photo in /public/photos/ and set its path here,

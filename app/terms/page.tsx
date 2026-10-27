@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import LegalPage from '@/components/LegalPage';
-import { site } from '@/lib/site';
+import { contactLine, site } from '@/lib/site';
 
 export const metadata: Metadata = { title: 'Terms and conditions' };
 
@@ -42,10 +42,10 @@ export default function Terms() {
         or consequential losses.
       </p>
       <h2>Governing law</h2>
-      <p>These terms are governed by the laws of India. Courts at [Your city] have jurisdiction.</p>
+      <p>These terms are governed by the laws of India. Courts having jurisdiction over our registered office have exclusive jurisdiction.</p>
       <h2>Contact</h2>
       <p>
-        {site.email} · {site.phone}
+        Questions about these terms? Contact us {contactLine()}.
       </p>
     </LegalPage>
   );
