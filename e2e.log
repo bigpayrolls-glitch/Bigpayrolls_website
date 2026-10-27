@@ -13,21 +13,29 @@ PASS admin posted a status update
 PASS admin sent quote of ₹40,000
 PASS client sees quote total
 PASS client sees admin update
-FAIL flow stopped: locator.waitFor: Timeout 15000ms exceeded.
-Call log:
-  - waiting for getByText('Advance due:') to be visible
+PASS client accepted quote and sees advance due
+PASS client sees UPI QR code
+PASS client sees UPI ID
+PASS client submitted payment with UTR
+PASS admin sees client accepted
+PASS admin sees payment to verify
+PASS admin confirmed ₹20,000 payment
+PASS admin created invoice BP/…/0001
+PASS admin saved Razorpay link
+PASS admin saved private team notes
+PASS admin list shows payment
+PASS admin clients page lists the client
+PASS client sees Pay online button
+PASS client opened invoice
+PASS invoice PDF downloaded: Invoice-BP-2026-27-0001.pdf
+PASS team notes hidden from client
+PASS client sees Advance paid
 
-
-10 passed, 1 failed
-::error::flow stopped: locator.waitFor: Timeout 15000ms exceeded.
-Call log:
-  - waiting for getByText('Advance due:') to be visible
-
-[33m[1m⚠ [22m[39m Script exited unsuccessfully (code 1)
+27 passed, 0 failed
+::notice::All 27 end-to-end checks passed
+[32m[1m✔ [22m[39m Script exited successfully (code 0)
 [36m[1mi  emulators:[22m[39m Shutting down emulators.
 [36m[1mi  firestore:[22m[39m Stopping Firestore Emulator
 [36m[1mi  auth:[22m[39m Stopping Authentication Emulator
 [36m[1mi  hub:[22m[39m Stopping emulator hub
 [36m[1mi  logging:[22m[39m Stopping Logging Emulator
-
-[1m[31mError:[39m[22m Script "[1mnode e2e/run.mjs[22m" exited with code 1
