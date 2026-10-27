@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import AppShell, { useClientProfile } from '@/components/AppShell';
 import { ArrowRight } from '@/components/Icons';
-import { listMyRequests, paidTotal, QUOTE_VISIBLE, respondToQuote, type ServiceRequest } from '@/lib/data';
+import { listMyRequests, QUOTE_VISIBLE, respondToQuote, type ServiceRequest } from '@/lib/data';
 import { INDUSTRIES, SERVICES, STATUS_FLOW, statusLabel, statusStep, statusTone } from '@/lib/catalog';
 import { fmtDate, fmtDateTime, inr } from '@/lib/format';
+import PayPanel from '@/components/PayPanel';
+import { getSettings, type BusinessSettings } from '@/lib/settings';
 
 const svcName = (id: string) => SERVICES.find((s) => s.id === id)?.t ?? id;
 const indName = (id: string) => INDUSTRIES.find((s) => s.id === id)?.t ?? id;
@@ -15,6 +17,7 @@ export default function DashboardPage() {
   const { user, profile, ready } = useClientProfile();
   const [requests, setRequests] = useState<ServiceRequest[] | null>(null);
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState<BusinessSettings | null>(null);
 
   const load = () => {
     if (!user) {
@@ -25,6 +28,10 @@ export default function DashboardPage() {
       .then(setRequests)
       .catch(() => setError('Could not load your requests. Please refresh the page.'));
   };
+
+  useEffect(() => {
+    if (ready && user) getSettings().then(setSettings).catch(() => setSettings(null));
+  }, [ready, user]);
 
   useEffect(() => {
     if (ready) load();
@@ -64,7 +71,7 @@ export default function DashboardPage() {
           ) : (
             <ul className="flex flex-col gap-4">
               {requests.map((r) => (
-                <RequestCard key={r.id} r={r} onChange={load} />
+                <RequestCard key={r.id} r={r} onChange={load} settings={settings} />
               ))}
             </ul>
           )}
@@ -74,12 +81,10 @@ export default function DashboardPage() {
   );
 }
 
-function RequestCard({ r, onChange }: { r: ServiceRequest; onChange: () => void }) {
+function RequestCard({ r, onChange, settings }: { r: ServiceRequest; onChange: () => void; settings: BusinessSettings | null }) {
   const idx = statusStep(r.status);
   const showQuote = !!r.quote && QUOTE_VISIBLE.includes(r.status) && !!r.quote.sentAt;
-  const paid = paidTotal(r);
   const total = r.quote?.total ?? 0;
-  const advanceDue = Math.max(0, (total * (r.quote?.advancePercent ?? 0)) / 100 - paid);
   const updates = [...(r.updates ?? [])].sort((a, b) => (b.at?.toMillis?.() ?? 0) - (a.at?.toMillis?.() ?? 0));
   const [showAll, setShowAll] = useState(false);
   const [note, setNote] = useState('');
@@ -215,25 +220,11 @@ function RequestCard({ r, onChange }: { r: ServiceRequest; onChange: () => void 
             <p className="rounded-xl bg-[#FFF1F2] p-3 text-sm">We have your change request and will send a revised quote soon.</p>
           )}
 
-          {['quote_accepted', 'advance_paid', 'in_progress', 'live', 'completed'].includes(r.status) && (
-            <div className="flex flex-col gap-2 rounded-xl bg-[#F0FDF4] p-4 text-sm">
-              <div className="flex flex-wrap gap-x-6 gap-y-1">
-                <span>
-                  Paid: <strong>{inr(paid)}</strong>
-                </span>
-                <span>
-                  Balance: <strong>{inr(Math.max(0, total - paid))}</strong>
-                </span>
-              </div>
-              {advanceDue > 0 && (
-                <p>
-                  Advance due: <strong>{inr(advanceDue)}</strong>. Our team will share payment details (UPI or bank transfer) with you. Online
-                  payment is coming soon.
-                </p>
-              )}
-            </div>
-          )}
         </div>
+      )}
+
+      {['quote_accepted', 'advance_paid', 'in_progress', 'live', 'completed'].includes(r.status) && (
+        <PayPanel r={r} settings={settings} onChange={onChange} />
       )}
     </li>
   );

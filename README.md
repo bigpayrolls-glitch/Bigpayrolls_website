@@ -64,10 +64,13 @@ Without the Firebase values the site still runs; login and saving are switched o
 | `/admin/` | All requests with counters (new, calls, waiting on client, in progress, payments received), filters and search |
 | `/admin/request/?id=…` | One request: client details with WhatsApp / call / email buttons, **post updates and change status** (client sees them), **build and send the quote**, **record payments**, private team notes |
 | `/admin/clients/` | Every client account with contact details, interests and total paid |
+| `/admin/settings/` | Your UPI ID, bank details and invoice details (prefix, GSTIN, email, footer) |
 
 **What the client sees** on `/dashboard/`: progress bar, your updates, the quote with **Accept quote** / **Ask for changes**, and paid / balance once they accept.
 
-**Payments (for now):** record each payment received by UPI, bank transfer, cash or cheque with the UTR/reference. Recording the first payment moves the request to *Advance paid* and tells the client. Online payment through Razorpay comes next, once the Razorpay account is approved.
+**Payments:** once the client accepts a quote, their dashboard shows the amount due with a **UPI QR code**, a **Pay with UPI app** button on phones (amount filled in), your **bank details**, and a **Pay online** button if you paste a Razorpay payment link on the request. After paying they click **I have paid** and enter the UTR; you see it under *Payments to verify* and click **Confirm received**. You can also record any payment by hand (cash, cheque, etc.). Money goes straight to your account; no gateway fees for UPI or bank transfer.
+
+**Invoices:** on a request click **Create invoice**. It gets the next number for the financial year (e.g. BP/2026-27/0001), shows items, payments received and balance due, and both you and the client can **Download PDF** from `/invoice/?id=…`.
 
 **Security:** clients only ever see their own requests; they cannot change prices, payments or status (except accepting a quote or asking for changes), and cannot read team notes. The rules are in `firestore.rules`, are published automatically on each deploy, and are covered by tests.
 

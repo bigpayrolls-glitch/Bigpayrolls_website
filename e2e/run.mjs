@@ -87,6 +87,19 @@ try {
   ok('admin sees the new request in the list');
   await shot(admin, 'admin-requests');
 
+  // Payment settings
+  await admin.goto(`${BASE}/admin/settings/`);
+  await admin.fill('#upi', 'bigpayrolls@okhdfcbank');
+  await admin.fill('#acno', '50200012345678');
+  await admin.fill('#ifsc', 'HDFC0001234');
+  await admin.fill('#bank', 'HDFC Bank');
+  await admin.fill('#iemail', 'accounts@bigpayrolls.com');
+  await admin.getByRole('button', { name: 'Save settings' }).click();
+  await admin.getByText('Saved. Clients will see', { exact: false }).waitFor({ timeout: 15000 });
+  ok('admin saved UPI and bank details');
+  await shot(admin, 'admin-settings');
+
+  await admin.goto(`${BASE}/admin/`);
   await admin.getByText('Spice Box Kitchen').first().click();
   await admin.getByRole('heading', { name: 'Spice Box Kitchen' }).waitFor({ timeout: 15000 });
   ok('admin opened request detail');
@@ -117,22 +130,38 @@ try {
   (await client.getByText('Thanks Ravi!').count()) > 0 ? ok('client sees admin update') : bad('client update missing');
   await shot(client, 'client-sees-quote');
   await client.getByRole('button', { name: 'Accept quote' }).click();
-  await client.getByText('Advance due:').waitFor({ timeout: 15000 });
+  await client.getByText('Advance due now').waitFor({ timeout: 15000 });
   ok('client accepted quote and sees advance due');
   await shot(client, 'client-accepted');
+  (await client.getByAltText(/UPI QR code/).count()) > 0 ? ok('client sees UPI QR code') : bad('UPI QR missing');
+  (await client.getByText('bigpayrolls@okhdfcbank').count()) > 0 ? ok('client sees UPI ID') : bad('UPI ID missing');
+
+  // Client reports a payment
+  await client.getByRole('button', { name: 'I have paid' }).click();
+  await client.locator('input[id^="putr-"]').fill('UTR987654321');
+  await client.getByRole('button', { name: 'Send to Big Payrolls' }).click();
+  await client.getByText('We received your note', { exact: false }).waitFor({ timeout: 15000 });
+  ok('client submitted payment with UTR');
+  await shot(client, 'client-reported-payment');
 
   // ---- Admin records payment
   await admin.reload();
   await admin.getByText('Client accepted the quote').waitFor({ timeout: 15000 });
   ok('admin sees client accepted');
-  await admin.fill('#pa', '20000');
-  await admin.fill('#pr', 'UTR123456789');
-  await admin.fill('#pn', '50% advance');
-  await admin.getByRole('button', { name: 'Record payment' }).click();
-  await admin.getByText('Payment recorded.', { exact: false }).waitFor({ timeout: 15000 });
-  await admin.reload();
-  await admin.getByText('UTR123456789').waitFor({ timeout: 15000 });
-  ok('admin recorded ₹20,000 payment');
+  await admin.getByText('Client says they paid', { exact: false }).waitFor({ timeout: 15000 });
+  ok('admin sees payment to verify');
+  await admin.getByRole('button', { name: 'Confirm received' }).click();
+  await admin.getByText('UTR987654321').first().waitFor({ timeout: 15000 });
+  ok('admin confirmed ₹20,000 payment');
+
+  // Invoice
+  await admin.getByRole('button', { name: 'Create invoice' }).click();
+  await admin.getByText(/Invoice BP\/\d{4}-\d{2}\/0001 created/).waitFor({ timeout: 15000 });
+  ok('admin created invoice BP/…/0001');
+  await admin.fill('#plink', 'https://rzp.io/l/test123');
+  await admin.getByRole('button', { name: 'Save link' }).click();
+  await admin.getByText('Payment link saved', { exact: false }).waitFor({ timeout: 15000 });
+  ok('admin saved Razorpay link');
   await admin.fill('#notes', 'Prefers WhatsApp. Menu Excel coming Friday.');
   await admin.getByRole('button', { name: 'Save notes' }).click();
   await admin.getByText('Saved.').waitFor({ timeout: 15000 });
@@ -151,16 +180,31 @@ try {
   // ---- Client final state
   await client.goto(`${BASE}/dashboard/`);
   await client.getByText('Advance paid').first().waitFor({ timeout: 15000 });
+  (await client.getByText('Pay online (card, UPI, netbanking)').count()) > 0 ? ok('client sees Pay online button') : bad('Pay online button missing');
+  await client.getByRole('link', { name: /Invoice BP\// }).click();
+  await client.getByRole('heading', { name: 'INVOICE' }).waitFor({ timeout: 15000 });
+  ok('client opened invoice');
+  await shot(client, 'client-invoice');
+  const [dl] = await Promise.all([client.waitForEvent('download', { timeout: 30000 }), client.getByRole('button', { name: 'Download PDF' }).click()]);
+  const pdfPath = `${OUT}/invoice.pdf`;
+  await dl.saveAs(pdfPath);
+  const head = (await import('node:fs')).readFileSync(pdfPath).subarray(0, 5).toString();
+  head === '%PDF-' && dl.suggestedFilename().startsWith('Invoice-BP-') ? ok('invoice PDF downloaded: ' + dl.suggestedFilename()) : bad('invoice PDF invalid');
+  await client.goto(`${BASE}/dashboard/`);
+  await client.getByText('Advance paid').first().waitFor({ timeout: 15000 });
   (await client.getByText('Prefers WhatsApp').count()) === 0 ? ok('team notes hidden from client') : bad('team notes visible to client!');
   ok('client sees Advance paid');
   await shot(client, 'client-final');
 
   // Mobile admin view
-  const m = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await admin.context().storageState() });
-  const mp = await m.newPage();
-  await mp.goto(`${BASE}/admin/`);
-  await mp.waitForTimeout(3000);
-  await mp.screenshot({ path: `${OUT}/${String(++step).padStart(2, '0')}-admin-mobile.png`, fullPage: true });
+  await client.setViewportSize({ width: 390, height: 844 });
+  await client.reload();
+  await client.getByText('Advance paid').first().waitFor({ timeout: 15000 });
+  await shot(client, 'client-mobile');
+  await admin.setViewportSize({ width: 390, height: 844 });
+  await admin.goto(`${BASE}/admin/`);
+  await admin.getByText('Spice Box Kitchen').first().waitFor({ timeout: 15000 });
+  await shot(admin, 'admin-mobile');
 } catch (e) {
   bad('flow stopped: ' + e.message);
 }
