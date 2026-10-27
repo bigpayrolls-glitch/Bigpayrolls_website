@@ -49,7 +49,7 @@ export default function Home() {
       <Header />
       <main className="overflow-x-clip">
         {/* Hero */}
-        <section className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-14 px-6 pb-20 pt-10">
+        <section className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-12 px-6 pb-14 pt-6">
           <div className="flex min-w-0 flex-[1_1_480px] flex-col gap-6">
             <span className="inline-flex items-center gap-2 self-start rounded-full border border-sand bg-white px-3.5 py-1.5 text-sm font-medium">
               <Sparkle size={16} className="text-[#E08600]" />
@@ -86,41 +86,40 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative h-[460px] min-w-0 flex-[1_1_420px] sm:h-[560px]">
+          <div className="relative h-[440px] min-w-0 flex-[1_1_420px] sm:h-[520px]">
+            <div className="ai-glow -left-10 top-10 h-[70%] w-[80%]" aria-hidden="true" />
+            <div className="ai-glow -right-6 bottom-0 h-[50%] w-[50%] opacity-70" aria-hidden="true" />
             <Photo
               src={photos.heroTeam}
               alt="Colleagues working together at an office desk"
               hint="Photo: your HR team with a client"
-              className="absolute left-0 top-0 h-full w-[58%] rounded-t-[240px] rounded-b-[28px]"
+              tilt={[2, 7, -1]}
+              className="absolute left-0 top-0 h-full w-[57%] rounded-t-[240px] rounded-b-[28px]"
             />
-            <Photo
-              src={photos.heroEmployee}
-              alt="Smiling professional in an office"
-              position="27% 30%"
-              hint="Photo: happy employee"
-              tone="stone"
-              className="absolute right-0 top-8 aspect-square w-[38%] rounded-full border-[6px] border-cream"
-            />
-            <Photo
-              src={photos.heroOwner}
-              alt="Shop owner at his grocery store counter"
-              hint="Photo: business owner at their shop"
-              tone="stone"
-              className="absolute bottom-0 right-0 h-[200px] w-[38%] rounded-[28px] sm:h-[230px]"
-            />
-            <div className="absolute bottom-24 left-0 flex min-w-[210px] items-center gap-3 rounded-[18px] border border-sand bg-white px-4 py-3.5 sm:-left-4">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-[#E7F6EC] text-[#16803C]">
-                <Check size={20} />
-              </span>
-              <span className="flex flex-col">
-                <span className="text-[15px] font-semibold">Payroll done</span>
-                <span className="text-[13px] text-soft">Payslips sent to all</span>
-              </span>
+            <div className="float-slow absolute right-0 top-6 w-[39%]">
+              <Photo
+                src={photos.heroEmployee}
+                alt="Smiling professional in an office"
+                position="27% 30%"
+                hint="Photo: happy employee"
+                tone="stone"
+                tilt={[4, -10, 2]}
+                className="aspect-square w-full rounded-full"
+              />
             </div>
-            <div className="absolute left-[40%] top-[46%] flex items-center gap-2.5 rounded-2xl bg-ink px-3.5 py-3 text-white">
-              <Sparkle size={18} className="text-brand" />
-              <span className="text-sm font-semibold">AI: PF filed on time</span>
+            <div className="float-slower absolute bottom-2 right-0 w-[39%]">
+              <Photo
+                src={photos.heroOwner}
+                alt="Shop owner at his grocery store counter"
+                hint="Photo: business owner at their shop"
+                tone="stone"
+                tilt={[-3, -9, 1]}
+                className="h-[190px] w-full rounded-[28px] sm:h-[220px]"
+              />
             </div>
+            <Sparkle size={26} className="float-slow absolute left-[52%] top-[6%] text-brand" />
+            <Sparkle size={16} className="float-slower absolute bottom-[38%] right-[42%] text-[#FF7A45]" />
+            <Sparkle size={20} className="float-slow absolute bottom-[4%] left-[50%] text-brand" />
           </div>
         </section>
 
@@ -137,7 +136,7 @@ export default function Home() {
         </section>
 
         {/* Services */}
-        <section id="services" className="mx-auto flex max-w-[1240px] scroll-mt-6 flex-col gap-11 px-6 pb-16 pt-28">
+        <section id="services" className="mx-auto flex max-w-[1240px] scroll-mt-6 flex-col gap-8 px-6 pb-10 pt-16">
           <div className="flex flex-col items-center gap-3.5 text-center">
             <Eyebrow center>What we do</Eyebrow>
             <h2 className="max-w-[760px] font-display text-4xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-[54px]">Two things, done really well.</h2>
@@ -170,7 +169,7 @@ export default function Home() {
 
         {/* Products */}
         <section id="products" className="scroll-mt-6 bg-peach">
-          <div className="mx-auto flex max-w-[1240px] flex-col gap-11 px-6 py-24">
+          <div className="mx-auto flex max-w-[1240px] flex-col gap-8 px-6 py-14">
             <div className="flex max-w-[640px] flex-col gap-3.5">
               <Eyebrow>Our products</Eyebrow>
               <h2 className="font-display text-4xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-[54px]">Made in-house, from real HR work.</h2>
@@ -234,13 +233,14 @@ export default function Home() {
         </section>
 
         {/* People + AI */}
-        <section className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-16 px-6 py-28">
+        <section className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-12 px-6 py-14">
           <Photo
             src={photos.supportCall}
             alt="Colleagues discussing work in an office"
             position="72% center"
             hint="Photo: your team member on a call with a client"
-            className="min-h-[420px] flex-[1_1_380px] rounded-[28px] rounded-br-[260px] sm:min-h-[520px]"
+            tilt={[2, 6, 0]}
+            className="min-h-[380px] flex-[1_1_380px] rounded-[28px] rounded-br-[220px] sm:min-h-[460px]"
           />
           <div className="flex flex-[1_1_440px] flex-col gap-5">
             <Eyebrow>Real people, AI speed</Eyebrow>
@@ -264,12 +264,12 @@ export default function Home() {
         </section>
 
         {/* Industries */}
-        <section id="industries" className="mx-auto flex max-w-[1240px] scroll-mt-6 flex-col gap-10 px-6 pb-28">
+        <section id="industries" className="mx-auto flex max-w-[1240px] scroll-mt-6 flex-col gap-8 px-6 pb-14">
           <h2 className="max-w-[700px] font-display text-4xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-[50px]">Built for businesses like yours</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {INDUSTRIES.map((i) => (
-              <Photo key={i.t} src={i.photo} alt={i.t} hint={i.hint} tone={i.tone} className="h-80 rounded-[28px]">
-                <span className="absolute inset-x-3.5 bottom-3.5 flex flex-col gap-0.5 rounded-2xl bg-white px-4 py-3.5">
+              <Photo key={i.t} src={i.photo} alt={i.t} hint={i.hint} tone={i.tone} tilt={[4, 0, 0]} className="h-72 rounded-[28px]">
+                <span className="photo-label absolute inset-x-3.5 bottom-3.5 flex flex-col gap-0.5 rounded-2xl bg-white px-4 py-3.5">
                   <span className="text-base font-bold">{i.t}</span>
                   <span className="text-[13px] text-muted">{i.d}</span>
                 </span>
@@ -280,7 +280,7 @@ export default function Home() {
 
         {/* How it works */}
         <section id="how" className="scroll-mt-6 border-y border-sand bg-white">
-          <div className="mx-auto flex max-w-[1240px] flex-col gap-12 px-6 py-24">
+          <div className="mx-auto flex max-w-[1240px] flex-col gap-10 px-6 py-14">
             <div className="flex flex-col items-center gap-3.5 text-center">
               <Eyebrow center>How it works</Eyebrow>
               <h2 className="font-display text-4xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-[50px]">No fixed packages. Just what you need.</h2>
@@ -307,7 +307,7 @@ export default function Home() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-[1240px] px-6 py-24">
+        <section className="mx-auto max-w-[1240px] px-6 py-12">
           <div className="flex flex-wrap items-center justify-between gap-8 rounded-[40px] bg-brand px-8 py-14 sm:px-12 sm:py-16">
             <div className="flex max-w-[640px] flex-col gap-3.5">
               <h2 className="font-display text-4xl font-bold leading-[1.02] tracking-[-0.03em] sm:text-[52px]">Let’s talk about your business.</h2>
@@ -342,10 +342,10 @@ function ServiceCard(props: {
   cta: string;
 }) {
   return (
-    <div id={props.id} className="flex scroll-mt-6 flex-col overflow-hidden rounded-[32px] border border-sand bg-white">
-      <Photo src={props.photo} alt={props.badge} hint={props.hint} tone={props.tone} className="h-[260px]">
+    <div id={props.id} className="card-3d flex scroll-mt-6 flex-col overflow-hidden rounded-[32px] border border-sand bg-white">
+      <Photo src={props.photo} alt={props.badge} hint={props.hint} tone={props.tone} effect={false} className="card-photo h-[240px]">
         <span
-          className={`absolute bottom-5 left-5 rounded-full px-3.5 py-2 text-sm font-bold ${props.badgeDark ? 'bg-ink text-white' : 'bg-white text-ink'}`}
+          className={`photo-label absolute bottom-5 left-5 rounded-full px-3.5 py-2 text-sm font-bold ${props.badgeDark ? 'bg-ink text-white' : 'bg-white text-ink'}`}
         >
           {props.badge}
         </span>

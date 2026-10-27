@@ -10,6 +10,8 @@ export default function Photo({
   hint,
   tone = 'warm',
   position = 'center',
+  effect = true,
+  tilt,
   className = '',
   children,
 }: {
@@ -19,6 +21,10 @@ export default function Photo({
   tone?: 'warm' | 'stone';
   /** CSS object-position, e.g. '30% center' to keep a face in frame */
   position?: string;
+  /** 3D frame with glowing AI border (on by default) */
+  effect?: boolean;
+  /** 3D tilt as [rotateX, rotateY, rotateZ] in degrees */
+  tilt?: [number, number, number];
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -26,7 +32,8 @@ export default function Photo({
     <div
       className={`${/\babsolute\b/.test(className) ? '' : 'relative'} overflow-hidden ${
         src ? 'bg-stone' : tone === 'warm' ? 'ph-warm' : 'ph-stone'
-      } ${className}`}
+      } ${effect ? 'photo-3d' : ''} ${className}`}
+      style={tilt ? ({ '--rx': `${tilt[0]}deg`, '--ry': `${tilt[1]}deg`, '--rz': `${tilt[2]}deg` } as React.CSSProperties) : undefined}
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
