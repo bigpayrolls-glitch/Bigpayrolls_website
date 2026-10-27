@@ -17,9 +17,13 @@ export default function AuthShell({
   return (
     <div className="flex min-h-screen flex-wrap bg-white">
       <aside className={`flex flex-[1_1_420px] flex-col justify-between gap-12 p-8 sm:p-12 ${dark ? 'bg-ink text-white' : 'bg-brand text-ink'}`}>
-        <Link href="/" aria-label="Back to Big Payrolls home" className="self-start rounded-2xl bg-white px-2.5 py-1.5">
+        <Link href="/" aria-label="Back to Big Payrolls home" className="self-start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.jpg" alt="Big Payrolls Solution Private Limited" className="h-14 w-auto" />
+          <img
+            src={dark ? '/logo-horizontal-white.png' : '/logo-horizontal.png'}
+            alt="Big Payrolls Solution Private Limited"
+            className="h-12 w-auto sm:h-14"
+          />
         </Link>
         <div className="flex max-w-[460px] flex-col gap-6">
           <h1 className="font-display text-4xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-[44px]">{title}</h1>

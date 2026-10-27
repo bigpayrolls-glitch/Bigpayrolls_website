@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="flex flex-wrap justify-between gap-12">
           <div className="flex max-w-[340px] flex-[1_1_280px] flex-col gap-3.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.jpg" alt={site.legalName} className="h-[72px] w-auto self-start mix-blend-multiply" />
+            <img src="/logo-stacked.png" alt={site.legalName} className="h-24 w-auto self-start" />
             <p className="text-[15px] leading-relaxed text-muted">HR services, payroll, compliance and technology for growing businesses.</p>
             <div className="flex flex-col gap-1.5 text-[15px]">
               <span>{site.phone}</span>

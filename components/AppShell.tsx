@@ -60,7 +60,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <Link href="/" aria-label="Big Payrolls home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.jpg" alt="Big Payrolls Solution Private Limited" className="h-12 w-auto" />
+            <img src="/logo-horizontal.png" alt="Big Payrolls Solution Private Limited" className="h-10 w-auto sm:h-11" />
           </Link>
           <nav aria-label="Client" className="flex flex-wrap items-center gap-1">
             {link('/dashboard/', 'Dashboard')}

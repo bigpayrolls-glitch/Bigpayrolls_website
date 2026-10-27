@@ -10,13 +10,13 @@ export const metadata: Metadata = {
   },
   description:
     'Big Payrolls runs your payroll, PF and ESI compliance and hiring, and builds the websites, apps and software your business runs on. Makers of PF Mitra and Auto Talent Grid.',
-  icons: { icon: '/logo.jpg' },
+  icons: { apple: '/apple-touch-icon.png' },
   openGraph: {
     title: 'Big Payrolls',
     description: 'Payroll, people and tech, sorted.',
     url: 'https://bigpayrolls.com',
     siteName: 'Big Payrolls',
-    images: ['/logo.jpg'],
+    images: ['/logo-stacked.png'],
     locale: 'en_IN',
     type: 'website',
   },

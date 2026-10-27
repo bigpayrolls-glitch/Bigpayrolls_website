@@ -15,14 +15,14 @@ export const site = {
  * e.g. heroTeam: '/photos/hero-team.jpg'. Leave as null to show the placeholder.
  */
 export const photos: Record<string, string | null> = {
-  heroTeam: null,
-  heroEmployee: null,
-  heroOwner: null,
-  hrServices: null,
-  techBuild: null,
-  supportCall: null,
-  industryRestaurant: null,
-  industryRetail: null,
-  industryHealthcare: null,
-  industryManufacturing: null,
+  heroTeam: '/photos/hero-team.jpg',
+  heroEmployee: '/photos/hero-employee.jpg',
+  heroOwner: '/photos/hero-owner.jpg',
+  hrServices: '/photos/hr-services.jpg',
+  techBuild: '/photos/tech-build.jpg',
+  supportCall: '/photos/support-call.jpg',
+  industryRestaurant: '/photos/industry-restaurant.jpg',
+  industryRetail: '/photos/industry-retail.jpg',
+  industryHealthcare: '/photos/industry-healthcare.jpg',
+  industryManufacturing: '/photos/industry-manufacturing.jpg',
 };

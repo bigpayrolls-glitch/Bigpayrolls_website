@@ -89,20 +89,21 @@ export default function Home() {
           <div className="relative h-[460px] min-w-0 flex-[1_1_420px] sm:h-[560px]">
             <Photo
               src={photos.heroTeam}
-              alt="Big Payrolls HR team with a client"
+              alt="Colleagues working together at an office desk"
               hint="Photo: your HR team with a client"
               className="absolute left-0 top-0 h-full w-[58%] rounded-t-[240px] rounded-b-[28px]"
             />
             <Photo
               src={photos.heroEmployee}
-              alt="A happy employee"
+              alt="Smiling professional in an office"
+              position="27% 30%"
               hint="Photo: happy employee"
               tone="stone"
               className="absolute right-0 top-8 aspect-square w-[38%] rounded-full border-[6px] border-cream"
             />
             <Photo
               src={photos.heroOwner}
-              alt="A business owner at their shop"
+              alt="Shop owner at his grocery store counter"
               hint="Photo: business owner at their shop"
               tone="stone"
               className="absolute bottom-0 right-0 h-[200px] w-[38%] rounded-[28px] sm:h-[230px]"
@@ -236,7 +237,8 @@ export default function Home() {
         <section className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-16 px-6 py-28">
           <Photo
             src={photos.supportCall}
-            alt="A Big Payrolls team member on a call with a client"
+            alt="Colleagues discussing work in an office"
+            position="72% center"
             hint="Photo: your team member on a call with a client"
             className="min-h-[420px] flex-[1_1_380px] rounded-[28px] rounded-br-[260px] sm:min-h-[520px]"
           />

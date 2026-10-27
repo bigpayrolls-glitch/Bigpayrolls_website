@@ -63,9 +63,26 @@ After you sign up on the site: Firestore → `users` → your document → chang
 
 `submitted` → `call_scheduled` → `quote_sent` → `accepted` → `in_progress` → `live` (also `changes_requested`, `cancelled`).
 
-## Add your photos
+## Photos
 
-Put photos in `public/photos/` and set their paths in `lib/site.ts` → `photos`, for example `heroTeam: '/photos/hero-team.jpg'`. Use your own photos or stock photos you have rights to (Unsplash and Pexels are free). Landscape photos around 1600 px wide work well; keep each under ~400 KB.
+The site uses free stock photos from [Pexels](https://www.pexels.com/license/) (free for commercial use, no attribution required), stored in `public/photos/` and listed in `lib/site.ts` → `photos`:
+
+| File | Pexels photo |
+|---|---|
+| hero-team.jpg | https://www.pexels.com/photo/7581046/ |
+| hero-employee.jpg | https://www.pexels.com/photo/7581111/ |
+| hero-owner.jpg | https://www.pexels.com/photo/26861411/ |
+| hr-services.jpg | https://www.pexels.com/photo/7580645/ |
+| tech-build.jpg | https://www.pexels.com/photo/12899156/ |
+| support-call.jpg | https://www.pexels.com/photo/7580638/ |
+| industry-restaurant.jpg | https://www.pexels.com/photo/12203611/ |
+| industry-retail.jpg | https://www.pexels.com/photo/36317181/ |
+| industry-healthcare.jpg | https://www.pexels.com/photo/7108318/ |
+| industry-manufacturing.jpg | https://www.pexels.com/photo/31047149/ |
+
+To use your own team or office photos instead, replace the file with the same name (landscape, ~1400 px wide, under ~300 KB). Real photos of your team build more trust than stock photos.
+
+Logos: `logo-horizontal.png` (header), `logo-horizontal-white.png` (dark backgrounds), `logo-stacked.png` (footer), `logo-mark.png` and `app/icon.png` (browser tab icon) — all transparent PNGs made from the original logo.
 
 ## Update contact details
 

@@ -21,7 +21,7 @@ export default function Header() {
     <header className="relative z-20 mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-4 px-6 py-4">
       <Link href="/" aria-label="Big Payrolls home" className="block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.jpg" alt="Big Payrolls Solution Private Limited" className="h-14 w-auto mix-blend-multiply" />
+        <img src="/logo-horizontal.png" alt="Big Payrolls Solution Private Limited" className="h-9 w-auto sm:h-[52px]" />
       </Link>
 
       <nav aria-label="Main" className="hidden items-center gap-1 rounded-full border border-sand bg-white p-1.5 text-[15px] font-medium lg:flex">
@@ -34,11 +34,11 @@ export default function Header() {
 
       <div className="flex items-center gap-2">
         {user ? (
-          <Link href="/dashboard/" className="inline-flex h-11 items-center rounded-full px-4 text-[15px] font-semibold hover:bg-peach">
+          <Link href="/dashboard/" className="hidden h-11 items-center rounded-full px-4 text-[15px] font-semibold hover:bg-peach sm:inline-flex">
             Dashboard
           </Link>
         ) : (
-          <Link href="/signin/" className="inline-flex h-11 items-center rounded-full px-4 text-[15px] font-semibold hover:bg-peach">
+          <Link href="/signin/" className="hidden h-11 items-center rounded-full px-4 text-[15px] font-semibold hover:bg-peach sm:inline-flex">
             Sign in
           </Link>
         )}
@@ -69,6 +69,9 @@ export default function Header() {
               {n.label}
             </a>
           ))}
+          <Link href={user ? '/dashboard/' : '/signin/'} className="rounded-2xl px-4 py-3 font-medium hover:bg-peach">
+            {user ? 'Dashboard' : 'Sign in'}
+          </Link>
           <Link href={user ? '/get-started/' : '/signup/'} className="mt-1 rounded-2xl bg-ink px-4 py-3 text-center font-semibold text-white">
             Get started
           </Link>

@@ -9,6 +9,7 @@ export default function Photo({
   alt,
   hint,
   tone = 'warm',
+  position = 'center',
   className = '',
   children,
 }: {
@@ -16,6 +17,8 @@ export default function Photo({
   alt: string;
   hint: string;
   tone?: 'warm' | 'stone';
+  /** CSS object-position, e.g. '30% center' to keep a face in frame */
+  position?: string;
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -27,7 +30,7 @@ export default function Photo({
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+        <img src={src} alt={alt} style={{ objectPosition: position }} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 p-5 text-center text-[13px] text-[#8a5a12]">
           <Camera size={32} className="text-[#b9862f]" />
