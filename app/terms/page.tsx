@@ -42,7 +42,7 @@ export default function Terms() {
         or consequential losses.
       </p>
       <h2>Governing law</h2>
-      <p>These terms are governed by the laws of India. Courts having jurisdiction over our registered office have exclusive jurisdiction.</p>
+      <p>These terms are governed by the laws of India. Courts at Bengaluru, Karnataka have exclusive jurisdiction.</p>
       <h2>Contact</h2>
       <p>
         Questions about these terms? Contact us {contactLine()}.

@@ -20,7 +20,11 @@ export default function Footer() {
             <div className="flex flex-col gap-1.5 text-[15px]">
               {site.phone && <a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a>}
               {site.email && <a href={`mailto:${site.email}`}>{site.email}</a>}
-              {site.address && <span>{site.address}</span>}
+              {site.address && (
+                <span className="text-muted">
+                  <span className="font-semibold text-ink">Registered office:</span> {site.address}
+                </span>
+              )}
               {!site.phone && !site.email && (
                 <Link href="/signup/" className="font-semibold underline underline-offset-2">
                   Get in touch: create a free account
