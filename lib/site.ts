@@ -22,7 +22,7 @@ export const contactLine = () =>
 export const photos: Record<string, string | null> = {
   heroTeam: '/photos/hero-team.jpg',
   heroEmployee: '/photos/hero-employee.jpg',
-  heroOwner: '/photos/hero-owner.jpg',
+  heroOwner: '/photos/hero-handshake.jpg',
   hrServices: '/photos/hr-services.jpg',
   techBuild: '/photos/tech-build.jpg',
   supportCall: '/photos/support-call.jpg',

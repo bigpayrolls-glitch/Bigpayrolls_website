@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Photo from '@/components/Photo';
-import { ArrowRight, Check, Phone, Sparkle } from '@/components/Icons';
+import { ArrowRight, ArrowUpRight, Check, Phone, Sparkle } from '@/components/Icons';
 import { photos } from '@/lib/site';
 
 const TRUST = ['Free discovery call', 'Custom quote, no fixed packages', 'Support on WhatsApp'];
@@ -31,10 +31,34 @@ const STEPS = [
   { n: '4', t: 'We deliver', d: 'Follow progress in your dashboard until it goes live.' },
 ];
 
-const PF_ROWS = [
-  { t: 'Monthly ECR', s: 'Filed', ok: true },
-  { t: 'Challan payment', s: 'Paid', ok: true },
-  { t: 'UAN KYC updates', s: 'Pending', ok: false },
+
+const PRODUCTS = [
+  {
+    name: 'PF Mitra',
+    kind: 'For employees',
+    domain: 'pfmitra.co.in',
+    url: 'https://pfmitra.co.in/',
+    tagline: 'Your Money. Your Benefits. Made Simple.',
+    desc: 'Helps employees in India understand their PF, loans, insurance and salary questions, get expert help, and track every request.',
+    points: ['PF help', 'Loans', 'Insurance', 'Salary questions', 'Request tracking'],
+    bg: 'linear-gradient(150deg, #0B6673 0%, #084D57 100%)',
+    glow: '#3FC1C9',
+    accent: '#9EE6EA',
+    note: 'PF Mitra is an independent service and is not affiliated with EPFO.',
+  },
+  {
+    name: 'Auto Talent Grid',
+    kind: 'For employers',
+    domain: 'autotalentgrid.com',
+    url: 'https://autotalentgrid.com/',
+    tagline: 'Hiring, sped up with AI.',
+    desc: 'Post jobs, let AI screen and rank candidates, and track every applicant in one place, so you meet the best people first.',
+    points: ['Job posting', 'AI screening', 'Candidate ranking', 'Hiring pipeline'],
+    bg: 'linear-gradient(150deg, #1C1C1E 0%, #0E0E10 100%)',
+    glow: '#F9A11B',
+    accent: '#FDC86A',
+    note: '',
+  },
 ];
 
 function Eyebrow({ children, center = false }: { children: React.ReactNode; center?: boolean }) {
@@ -110,8 +134,9 @@ export default function Home() {
             <div className="float-slower absolute bottom-2 right-0 w-[39%]">
               <Photo
                 src={photos.heroOwner}
-                alt="Shop owner at his grocery store counter"
-                hint="Photo: business owner at their shop"
+                alt="Business handshake with a client"
+                hint="Photo: meeting with a client"
+                position="55% 60%"
                 tone="stone"
                 tilt={[-3, -9, 1]}
                 className="h-[190px] w-full rounded-[28px] sm:h-[220px]"
@@ -175,59 +200,49 @@ export default function Home() {
               <h2 className="font-display text-4xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-[54px]">Made in-house, from real HR work.</h2>
             </div>
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex flex-col gap-5 rounded-[32px] bg-white p-7 sm:p-9">
-                <div className="flex items-center gap-3.5">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-brand font-display text-[22px] font-extrabold">PF</span>
-                  <div className="flex flex-col">
-                    <span className="font-display text-3xl font-bold tracking-[-0.02em]">PF Mitra</span>
-                    <span className="text-sm text-soft">Your PF compliance buddy</span>
-                  </div>
-                </div>
-                <p className="text-[17px] leading-relaxed text-muted">
-                  Manage UANs, monthly returns and challans, and employee PF queries, all in one simple place.
-                </p>
-                <div aria-hidden="true" className="flex flex-col gap-2 rounded-[20px] border border-[#F1E6D3] bg-cream p-3.5">
-                  {PF_ROWS.map((r) => (
-                    <div key={r.t} className="flex items-center justify-between rounded-xl border border-[#F1E6D3] bg-white px-3 py-2.5">
-                      <span className="text-sm font-semibold">{r.t}</span>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${r.ok ? 'bg-[#DCFCE7] text-[#166534]' : 'bg-[#FEF3C7] text-[#92400E]'}`}>{r.s}</span>
+              {PRODUCTS.map((p) => (
+                <a
+                  key={p.name}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="card-3d group relative flex flex-col overflow-hidden rounded-[32px] text-white"
+                  style={{ background: p.bg }}
+                >
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
+                    style={{ background: p.glow }}
+                  />
+                  <div className="relative flex flex-1 flex-col gap-5 p-8 sm:p-10">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] backdrop-blur">
+                        {p.kind}
+                      </span>
+                      <span className="text-sm font-medium opacity-80">{p.domain}</span>
                     </div>
-                  ))}
-                </div>
-                <Link href="/signup/" className="inline-flex h-12 items-center self-start rounded-full bg-ink px-5 font-semibold text-white">
-                  Explore PF Mitra
-                </Link>
-              </div>
-
-              <div className="flex flex-col gap-5 rounded-[32px] bg-white p-7 sm:p-9">
-                <div className="flex items-center gap-3.5">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-ink font-display text-xl font-extrabold text-brand">ATG</span>
-                  <div className="flex flex-col">
-                    <span className="font-display text-3xl font-bold tracking-[-0.02em]">Auto Talent Grid</span>
-                    <span className="text-sm text-soft">Hiring, sped up with AI</span>
-                  </div>
-                </div>
-                <p className="text-[17px] leading-relaxed text-muted">
-                  Post jobs, let AI screen and rank candidates, and track every applicant on one clear grid.
-                </p>
-                <div aria-hidden="true" className="grid grid-cols-3 gap-2">
-                  {[
-                    { h: 'Applied', n: 3, on: false },
-                    { h: 'AI picks', n: 2, on: true },
-                    { h: 'Hired', n: 1, on: false },
-                  ].map((c) => (
-                    <div key={c.h} className="flex flex-col gap-1.5 rounded-2xl border border-[#F1E6D3] bg-cream p-2.5">
-                      <span className="text-xs font-semibold text-soft">{c.h}</span>
-                      {Array.from({ length: c.n }).map((_, i) => (
-                        <span key={i} className={`h-[22px] rounded-lg border ${c.on ? 'border-brand bg-[#FFE3B3]' : 'border-transparent bg-stone'}`} />
+                    <div className="flex flex-col gap-2">
+                      <h3 className="font-display text-4xl font-bold tracking-[-0.02em] sm:text-5xl">{p.name}</h3>
+                      <p className="font-display text-xl font-semibold" style={{ color: p.accent }}>
+                        {p.tagline}
+                      </p>
+                    </div>
+                    <p className="max-w-[460px] text-[17px] leading-relaxed text-white/85">{p.desc}</p>
+                    <ul className="flex flex-wrap gap-2">
+                      {p.points.map((pt) => (
+                        <li key={pt} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-2 text-sm font-medium">
+                          <Check size={14} />
+                          {pt}
+                        </li>
                       ))}
-                    </div>
-                  ))}
-                </div>
-                <Link href="/signup/" className="inline-flex h-12 items-center self-start rounded-full bg-ink px-5 font-semibold text-white">
-                  Explore Auto Talent Grid
-                </Link>
-              </div>
+                    </ul>
+                    <span className="mt-auto inline-flex items-center gap-2 self-start rounded-full bg-white px-5 py-3 font-semibold text-ink transition group-hover:gap-3">
+                      Visit {p.domain} <ArrowUpRight size={16} />
+                    </span>
+                    {p.note && <p className="text-xs text-white/70">{p.note}</p>}
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         </section>

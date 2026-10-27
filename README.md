@@ -71,7 +71,7 @@ The site uses free stock photos from [Pexels](https://www.pexels.com/license/) (
 |---|---|
 | hero-team.jpg | https://www.pexels.com/photo/7581046/ |
 | hero-employee.jpg | https://www.pexels.com/photo/7581111/ |
-| hero-owner.jpg | https://www.pexels.com/photo/26861411/ |
+| hero-handshake.jpg | https://www.pexels.com/photo/8837500/ |
 | hr-services.jpg | https://www.pexels.com/photo/7580645/ |
 | tech-build.jpg | https://www.pexels.com/photo/12899156/ |
 | support-call.jpg | https://www.pexels.com/photo/7580638/ |
