@@ -1,0 +1,21 @@
+name: Fetch photo previews
+on:
+  push:
+    branches: [photo-review]
+    paths: [candidates.txt]
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: |
+          mkdir -p previews
+          while read -r id; do
+            [ -z "$id" ] && continue
+            curl -fsSL -A "Mozilla/5.0" -o "previews/$id.jpg" "https://images.pexels.com/photos/$id/pexels-photo-$id.jpeg?auto=compress&cs=tinysrgb&w=480" || echo "::warning::failed $id"
+          done < candidates.txt
+          ls -la previews
+          git config user.name "photo-bot"; git config user.email "photo-bot@users.noreply.github.com"
+          git add previews && git commit -m "Add photo previews" && git push
