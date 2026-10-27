@@ -21,8 +21,8 @@ Company website for **Big Payrolls Solution Private Limited** with client sign u
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in the Firebase values (step 4 below)
-npm run dev                  # open http://localhost:3000
+cp .env.production .env.local   # Firebase keys for project bigpayrolls-6ec80
+npm run dev                     # open http://localhost:3000
 ```
 
 Without the Firebase values the site still runs; login and saving are switched off and a note says so.
@@ -46,7 +46,7 @@ Without the Firebase values the site still runs; login and saving are switched o
    firebase deploy --only hosting
    ```
    It goes live at `https://<project-id>.web.app`.
-7. **Auto-deploy from GitHub (optional, recommended):** in Google Cloud console → *IAM → Service accounts* → create one with role **Firebase Hosting Admin** → *Keys → Add key → JSON*. In GitHub → *Settings → Secrets and variables → Actions* add `FIREBASE_SERVICE_ACCOUNT` (the whole JSON) plus each `NEXT_PUBLIC_FIREBASE_*` value. Every push to `main` then builds and deploys (`.github/workflows/deploy.yml`).
+7. **Auto-deploy from GitHub:** Firebase → *Project settings → Service accounts → Generate new private key* (keep this file private). In GitHub → *Settings → Secrets and variables → Actions* add a secret named `FIREBASE_SERVICE_ACCOUNT` containing the whole JSON file. Every push to `main` then builds and deploys (`.github/workflows/deploy.yml`). The public web config is already in `.env.production`.
 
 ## Connect bigpayrolls.com
 
