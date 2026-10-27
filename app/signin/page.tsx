@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import AuthShell, { authErrorMessage, nextPath } from '@/components/AuthShell';
@@ -19,13 +19,22 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
+  const routing = useRef(false);
+
+  // Already signed in (or just signed in): send them to the right place once.
   useEffect(() => {
-    if (!loading && user) router.replace(nextPath());
-  }, [user, loading, router]);
+    if (!loading && user && !routing.current) {
+      routing.current = true;
+      afterLogin(user.uid);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading]);
 
   async function afterLogin(uid: string) {
     const profile = await getProfile(uid).catch(() => null);
-    const next = nextPath();
+    const hasNext = new URLSearchParams(window.location.search).has('next');
+    // Staff land on the admin dashboard unless they were heading somewhere specific
+    const next = profile?.role === 'admin' && !hasNext ? '/admin/' : nextPath();
     router.replace(profile ? next : `/signup/?next=${encodeURIComponent(next)}`);
   }
 
@@ -38,8 +47,8 @@ export default function SignInPage() {
     if (!password) return setError('Enter your password.');
     setBusy(true);
     try {
-      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
-      await afterLogin(cred.user.uid);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      // The effect above routes them once the login state updates
     } catch (err) {
       setError(authErrorMessage(err));
     } finally {
@@ -52,8 +61,7 @@ export default function SignInPage() {
     if (!auth) return setError('Login is not connected yet.');
     setBusy(true);
     try {
-      const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-      await afterLogin(cred.user.uid);
+      await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (err) {
       setError(authErrorMessage(err));
     } finally {

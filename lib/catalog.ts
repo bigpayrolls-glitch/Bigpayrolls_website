@@ -79,21 +79,64 @@ export const INTERESTS = [
 
 export const COMPANY_SIZES = ['1–10', '11–50', '51–200', '201–500', '500+'];
 
-/** Request status flow, shown to clients in their dashboard. */
+/** Request status flow, shown to clients as a progress bar. */
 export const STATUS_FLOW = [
   { id: 'submitted', label: 'Submitted' },
   { id: 'call_scheduled', label: 'Call scheduled' },
   { id: 'quote_sent', label: 'Quote ready' },
-  { id: 'accepted', label: 'Accepted and paid' },
+  { id: 'quote_accepted', label: 'Quote accepted' },
+  { id: 'advance_paid', label: 'Advance paid' },
   { id: 'in_progress', label: 'In progress' },
   { id: 'live', label: 'Live' },
 ] as const;
 
+export const OTHER_STATUSES = [
+  { id: 'changes_requested', label: 'Changes requested' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'cancelled', label: 'Cancelled' },
+] as const;
+
+export const ALL_STATUSES = [...STATUS_FLOW, ...OTHER_STATUSES];
+
 export function statusLabel(id: string) {
-  if (id === 'changes_requested') return 'Changes requested';
-  if (id === 'cancelled') return 'Cancelled';
-  return STATUS_FLOW.find((s) => s.id === id)?.label ?? id;
+  return ALL_STATUSES.find((s) => s.id === id)?.label ?? id;
 }
+
+/** Position on the progress bar (changes requested sits with "quote ready"). */
+export function statusStep(id: string) {
+  if (id === 'changes_requested') return 2;
+  if (id === 'completed') return STATUS_FLOW.length - 1;
+  return STATUS_FLOW.findIndex((s) => s.id === id);
+}
+
+/** Badge colours per status. */
+export function statusTone(id: string) {
+  switch (id) {
+    case 'submitted':
+      return 'bg-[#FEF3C7] text-[#92400E]';
+    case 'call_scheduled':
+      return 'bg-[#E0F2FE] text-[#075985]';
+    case 'quote_sent':
+      return 'bg-[#EDE9FE] text-[#5B21B6]';
+    case 'changes_requested':
+      return 'bg-[#FFE4E6] text-[#9F1239]';
+    case 'quote_accepted':
+      return 'bg-[#DCFCE7] text-[#166534]';
+    case 'advance_paid':
+      return 'bg-[#D1FAE5] text-[#065F46]';
+    case 'in_progress':
+      return 'bg-[#FFEDD5] text-[#9A3412]';
+    case 'live':
+    case 'completed':
+      return 'bg-ink text-white';
+    case 'cancelled':
+      return 'bg-stone text-muted';
+    default:
+      return 'bg-stone text-ink';
+  }
+}
+
+export const PAYMENT_MODES = ['UPI', 'Bank transfer', 'Cash', 'Cheque', 'Card / Razorpay'];
 
 /** Next 6 days, skipping Sundays, as labels like "Wed 28 Oct". */
 export function nextCallDays(from = new Date(), count = 6) {

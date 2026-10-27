@@ -1,6 +1,6 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
+import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -22,6 +22,11 @@ if (isFirebaseConfigured && typeof window !== 'undefined') {
   app = getApps()[0] ?? initializeApp(config);
   auth = getAuth(app);
   db = getFirestore(app);
+  // Local testing only: talk to the Firebase emulators instead of the real project.
+  if (process.env.NEXT_PUBLIC_USE_EMULATORS === '1') {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  }
 }
 
 export { app, auth, db };

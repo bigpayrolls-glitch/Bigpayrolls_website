@@ -55,13 +55,27 @@ Without the Firebase values the site still runs; login and saving are switched o
 3. Wait for verification (minutes to a few hours). Firebase sets up HTTPS for free.
 4. Firebase → *Authentication → Settings → Authorized domains* → add `bigpayrolls.com` and `www.bigpayrolls.com` so Google sign-in works there.
 
-## Make yourself an admin
+## Admin dashboard — bigpayrolls.com/admin
 
-After you sign up on the site: Firestore → `users` → your document → change `role` from `client` to `admin`. Admins can read and update every request (the admin screens come in the next phase; until then you can set a quote directly in Firestore — add a `quote` map with `total`, `items` and `notes`, and set `status` to `quote_sent`).
+**Make yourself (or staff) an admin:** sign up on the site, then Firebase → Firestore → `users` → that person's document → change `role` from `client` to `admin`. Admins are taken to `/admin/` when they sign in.
+
+| Page | What you do there |
+|---|---|
+| `/admin/` | All requests with counters (new, calls, waiting on client, in progress, payments received), filters and search |
+| `/admin/request/?id=…` | One request: client details with WhatsApp / call / email buttons, **post updates and change status** (client sees them), **build and send the quote**, **record payments**, private team notes |
+| `/admin/clients/` | Every client account with contact details, interests and total paid |
+
+**What the client sees** on `/dashboard/`: progress bar, your updates, the quote with **Accept quote** / **Ask for changes**, and paid / balance once they accept.
+
+**Payments (for now):** record each payment received by UPI, bank transfer, cash or cheque with the UTR/reference. Recording the first payment moves the request to *Advance paid* and tells the client. Online payment through Razorpay comes next, once the Razorpay account is approved.
+
+**Security:** clients only ever see their own requests; they cannot change prices, payments or status (except accepting a quote or asking for changes), and cannot read team notes. The rules are in `firestore.rules`, are published automatically on each deploy, and are covered by tests.
+
+**Testing:** GitHub → Actions → *End-to-end test* → *Run workflow* runs the whole client + admin flow in a browser against test copies of Firebase (no live data touched).
 
 ## Request statuses
 
-`submitted` → `call_scheduled` → `quote_sent` → `accepted` → `in_progress` → `live` (also `changes_requested`, `cancelled`).
+`submitted` → `call_scheduled` → `quote_sent` → `quote_accepted` → `advance_paid` → `in_progress` → `live` (also `changes_requested`, `completed`, `cancelled`).
 
 ## Photos
 

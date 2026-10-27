@@ -46,6 +46,22 @@ jobs:
           print(f"::notice::Deploy key OK for project {d['project_id']} ({d['client_email']})")
           PY
 
+      - name: Publish Firestore security rules
+        continue-on-error: true
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          set +e
+          npx --yes firebase-tools@latest deploy --only firestore:rules --project bigpayrolls-6ec80 --non-interactive 2>&1 | tee rules.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::Could not publish Firestore rules automatically. Paste firestore.rules into Firebase > Firestore > Rules and click Publish."
+            grep -iE "error|denied|permission" rules.log | tail -n 5 | while IFS= read -r line; do echo "::warning::${line}"; done
+          else
+            echo "::notice::Firestore security rules published"
+          fi
+          exit $status
+
       - name: Deploy to Firebase Hosting
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json

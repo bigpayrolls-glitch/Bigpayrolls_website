@@ -1,0 +1,29 @@
+# Manual end-to-end test: client request -> admin quote -> client accepts -> admin records payment,
+# run in a real browser against the Firebase emulators (never touches live data).
+# Run it from GitHub > Actions > "End-to-end test" > Run workflow. Screenshots are attached to the run.
+name: End-to-end test
+on:
+  workflow_dispatch:
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm ci
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_USE_EMULATORS: '1'
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-bp
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-bp.firebaseapp.com
+      - run: npm install --no-save playwright@1.48.2 firebase-tools@14 && npx playwright install --with-deps chromium
+      - run: (python3 -m http.server 3000 --directory out >/dev/null 2>&1 &) && sleep 2
+      - run: npx firebase emulators:exec --only auth,firestore --project demo-bp "node e2e/run.mjs"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: e2e/shots
