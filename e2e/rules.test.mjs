@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const env = await initializeTestEnvironment({ projectId: 'demo-rules', firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: '127.0.0.1', port: 8080 } });
 let pass = 0, fail = 0;
-async function t(name, fn) { try { await fn(); pass++; console.log('PASS', name); } catch (e) { fail++; console.log('FAIL', name, '-', e.message); } }
+async function t(name, fn) { try { await fn(); pass++; console.log('PASS', name); } catch (e) { fail++; console.log('FAIL', name, '-', e.message); console.log(`::error::FAIL ${name}`); } }
 
 await env.withSecurityRulesDisabled(async (c) => {
   const db = c.firestore();
