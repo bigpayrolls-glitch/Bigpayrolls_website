@@ -14,7 +14,10 @@ import {
   saveInternalNotes,
   saveQuote,
   type ClientRow,
+  rejectClaim,
+  verifyClaim,
 } from '@/lib/admin';
+import { createInvoice, getSettings, setPaymentLink } from '@/lib/settings';
 import { paidTotal, QUOTE_VISIBLE, type QuoteItem, type ServiceRequest } from '@/lib/data';
 import { ALL_STATUSES, INDUSTRIES, INTERESTS, PAYMENT_MODES, SERVICES, statusLabel, statusTone } from '@/lib/catalog';
 import { fmtDate, fmtDateTime, inr, todayISO, waLink } from '@/lib/format';
@@ -137,6 +140,7 @@ function RequestDetail() {
 
           <QuoteBuilder r={r} onSaved={reload} />
           <Payments r={r} onSaved={reload} />
+          <InvoiceAndLink r={r} onSaved={reload} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
@@ -430,6 +434,7 @@ function Payments({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }) {
 
   return (
     <Panel title="Payments">
+      <PaymentClaims r={r} onSaved={onSaved} />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat k="Quote total" v={total ? inr(total) : '—'} />
         <Stat k="Received" v={inr(paid)} tone="text-[#166534]" />
@@ -560,6 +565,136 @@ function InternalNotes({ id }: { id: string }) {
       <button type="button" onClick={save} className="h-10 self-start rounded-full border border-sand bg-white px-4 text-sm font-semibold hover:bg-peach">
         Save notes
       </button>
+    </Panel>
+  );
+}
+
+/* ---------------- Client-reported payments ---------------- */
+
+function PaymentClaims({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }) {
+  const [busy, setBusy] = useState<number | null>(null);
+  const claims = (r.paymentClaims ?? []).map((c, i) => ({ c, i })).filter(({ c }) => !c.verified && !c.rejected);
+  if (!claims.length) return null;
+
+  async function act(i: number, ok: boolean) {
+    if (!ok && !window.confirm('Mark this as not received? The client will still see it as pending.')) return;
+    setBusy(i);
+    try {
+      if (ok) await verifyClaim(r, i);
+      else await rejectClaim(r, i);
+      onSaved();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-[#FDA4AF] bg-[#FFF1F2] p-4">
+      <span className="text-sm font-semibold text-[#9F1239]">Client says they paid. Check your bank / UPI app, then confirm.</span>
+      {claims.map(({ c, i }) => (
+        <div key={i} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-3.5 py-2.5 text-sm">
+          <span>
+            <strong>{inr(c.amount)}</strong> by {c.mode} · UTR <strong>{c.utr}</strong>
+            <span className="ml-2 text-xs text-muted">{fmtDateTime(c.at)}</span>
+          </span>
+          <span className="flex gap-2">
+            <button type="button" disabled={busy !== null} onClick={() => act(i, true)} className="h-9 rounded-full bg-[#15803D] px-4 text-sm font-semibold text-white disabled:opacity-60">
+              {busy === i ? 'Saving…' : 'Confirm received'}
+            </button>
+            <button type="button" disabled={busy !== null} onClick={() => act(i, false)} className="h-9 rounded-full border border-sand px-3 text-sm font-semibold">
+              Not received
+            </button>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- Invoice + payment link ---------------- */
+
+function InvoiceAndLink({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }) {
+  const [link, setLink] = useState(r.paymentLink ?? '');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const canInvoice = !!r.quote?.total && ['quote_accepted', 'advance_paid', 'in_progress', 'live', 'completed'].includes(r.status);
+
+  async function makeInvoice() {
+    setMsg('');
+    setBusy(true);
+    try {
+      const s = await getSettings();
+      const n = await createInvoice(r, s.invoicePrefix);
+      setMsg(`Invoice ${n} created. The client can download it from their dashboard.`);
+      onSaved();
+    } catch {
+      setMsg('Could not create the invoice. Make sure the latest security rules are published.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveLink() {
+    setMsg('');
+    const v = link.trim();
+    if (v && !/^https:\/\/\S+$/.test(v)) return setMsg('Paste a full link starting with https://');
+    try {
+      await setPaymentLink(r.id, v);
+      setMsg(v ? 'Payment link saved. The client now sees a "Pay online" button.' : 'Payment link removed.');
+      onSaved();
+    } catch {
+      setMsg('Could not save the link.');
+    }
+  }
+
+  return (
+    <Panel title="Invoice and online payment">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-cream px-4 py-3.5">
+        {r.invoice ? (
+          <>
+            <span className="text-sm">
+              Invoice <strong>{r.invoice.number}</strong> · {fmtDate(r.invoice.date)}
+            </span>
+            <Link href={`/invoice/?id=${r.id}`} className="inline-flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">
+              View / download PDF
+            </Link>
+          </>
+        ) : (
+          <>
+            <span className="text-sm text-muted">
+              {canInvoice ? 'Create a numbered invoice the client can download.' : 'Available once the client accepts the quote.'}
+            </span>
+            <button
+              type="button"
+              disabled={!canInvoice || busy}
+              onClick={makeInvoice}
+              className="h-10 rounded-full bg-ink px-4 text-sm font-semibold text-white disabled:opacity-40"
+            >
+              {busy ? 'Creating…' : 'Create invoice'}
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="plink" className="label">
+          Razorpay payment link <span className="font-normal text-muted">(optional, for card / netbanking)</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <input
+            id="plink"
+            className="field field-sm min-w-0 flex-1"
+            placeholder="https://rzp.io/l/…"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+          />
+          <button type="button" onClick={saveLink} className="h-11 rounded-full border border-sand bg-white px-4 text-sm font-semibold hover:bg-peach">
+            Save link
+          </button>
+        </div>
+        <p className="text-xs text-muted">Create it in Razorpay → Payment Links for the amount due, then paste it here.</p>
+      </div>
+      {msg && <p role="status" className="text-sm font-medium">{msg}</p>}
     </Panel>
   );
 }

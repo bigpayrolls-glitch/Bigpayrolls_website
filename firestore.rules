@@ -46,20 +46,45 @@ service cloud.firestore {
         && !('quote' in request.resource.data)
         && !('payments' in request.resource.data)
         && !('updates' in request.resource.data)
+        && !('invoice' in request.resource.data)
+        && !('paymentLink' in request.resource.data)
+        && !('paymentClaims' in request.resource.data)
         && request.resource.data.services is list
         && request.resource.data.services.size() > 0
         && request.resource.data.services.size() <= 20;
 
-      // Client: accept the quote or ask for changes, nothing else.
+      // Client may only: (1) accept the quote or ask for changes while it is "quote_sent",
+      // or (2) add one "I have paid" claim (amount + UTR) once the quote is accepted.
       allow update: if isAdmin() || (
         signedIn()
         && resource.data.uid == request.auth.uid
-        && resource.data.status == 'quote_sent'
-        && request.resource.data.status in ['quote_accepted', 'changes_requested']
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'clientResponse', 'updatedAt'])
+        && (
+          (
+            resource.data.status == 'quote_sent'
+            && request.resource.data.status in ['quote_accepted', 'changes_requested']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'clientResponse', 'updatedAt'])
+          ) || (
+            resource.data.status in ['quote_accepted', 'advance_paid', 'in_progress', 'live', 'completed']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paymentClaims', 'updatedAt'])
+            && request.resource.data.paymentClaims is list
+            && request.resource.data.paymentClaims.size() == resource.data.get('paymentClaims', []).size() + 1
+            && request.resource.data.paymentClaims.size() <= 20
+          )
+        )
       );
 
       allow delete: if isAdmin();
+    }
+
+    // Payment / invoice details: any signed-in client can read them (to pay), only admins can change them.
+    match /settings/business {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Invoice counters and anything else in settings: admins only.
+    match /settings/{other} {
+      allow read, write: if isAdmin();
     }
 
     // Private team notes per request. Never visible to clients.

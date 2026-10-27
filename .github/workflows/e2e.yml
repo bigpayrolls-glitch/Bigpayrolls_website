@@ -4,6 +4,10 @@
 name: End-to-end test
 on:
   workflow_dispatch:
+  push:
+    branches: [e2e-run2]
+permissions:
+  contents: write
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -19,11 +23,17 @@ jobs:
           NEXT_PUBLIC_USE_EMULATORS: '1'
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-bp
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-bp.firebaseapp.com
-      - run: npm install --no-save playwright@1.48.2 firebase-tools@14 && npx playwright install --with-deps chromium
+      - run: npm install --no-save playwright@1.48.2 firebase-tools@14 @firebase/rules-unit-testing@4 && npx playwright install --with-deps chromium
+      - name: Security rule tests
+        run: npx firebase emulators:exec --only firestore --project demo-rules "node e2e/rules.test.mjs"
       - run: (python3 -m http.server 3000 --directory out >/dev/null 2>&1 &) && sleep 2
-      - run: npx firebase emulators:exec --only auth,firestore --project demo-bp "node e2e/run.mjs"
+      - run: npx firebase emulators:exec --only auth,firestore --project demo-bp "node e2e/run.mjs" 2>&1 | tee e2e.log; exit ${PIPESTATUS[0]}
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-screenshots
           path: e2e/shots
+      - if: always()
+        run: |
+          git config user.name "e2e-bot"; git config user.email "e2e-bot@users.noreply.github.com"
+          git add -f e2e/shots e2e.log && git commit -m "E2E screenshots" && git push || true

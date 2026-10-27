@@ -49,6 +49,8 @@ export type Payment = {
   at: Timestamp;
 };
 
+export type PaymentClaim = { amount: number; utr: string; mode: string; at: Timestamp; verified?: boolean; rejected?: boolean };
+
 export type ClientResponse = { decision: 'accepted' | 'changes_requested'; note?: string; at: Timestamp };
 
 export type ServiceRequest = {
@@ -67,6 +69,11 @@ export type ServiceRequest = {
   updates?: RequestUpdate[];
   payments?: Payment[];
   clientResponse?: ClientResponse | null;
+  invoice?: { number: string; date: string; createdAt?: Timestamp } | null;
+  /** Razorpay (or other) payment link pasted by the admin */
+  paymentLink?: string;
+  /** Payments the client says they made, waiting for admin to verify */
+  paymentClaims?: PaymentClaim[];
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 };
@@ -99,7 +106,10 @@ export async function saveProfile(uid: string, p: Omit<Profile, 'role' | 'create
 
 export async function createRequest(
   uid: string,
-  r: Omit<ServiceRequest, 'id' | 'uid' | 'status' | 'createdAt' | 'updatedAt' | 'quote' | 'updates' | 'payments' | 'clientResponse'>,
+  r: Omit<
+    ServiceRequest,
+    'id' | 'uid' | 'status' | 'createdAt' | 'updatedAt' | 'quote' | 'updates' | 'payments' | 'clientResponse' | 'invoice' | 'paymentLink' | 'paymentClaims'
+  >,
 ) {
   const ref = await addDoc(collection(requireDb(), 'requests'), {
     ...r,

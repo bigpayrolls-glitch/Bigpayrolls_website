@@ -32,12 +32,14 @@ function RequestsBoard({ name }: { name: string }) {
   const stats = useMemo(() => {
     const r = rows ?? [];
     const count = (ids: string[]) => r.filter((x) => ids.includes(x.status)).length;
+    const toVerify = r.filter((x) => (x.paymentClaims ?? []).some((c) => !c.verified && !c.rejected)).length;
     return [
-      { label: 'New requests', value: count(['submitted']), hint: 'Need a call', filter: 'submitted' },
-      { label: 'Calls scheduled', value: count(['call_scheduled']), hint: 'Prepare quotes', filter: 'call_scheduled' },
-      { label: 'Waiting on client', value: count(['quote_sent', 'changes_requested', 'quote_accepted']), hint: 'Quote / payment', filter: 'waiting' },
-      { label: 'In progress', value: count(['advance_paid', 'in_progress']), hint: 'Active projects', filter: 'active' },
-      { label: 'Payments received', value: inr(r.reduce((s, x) => s + paidTotal(x), 0)), hint: 'All time', filter: 'paid' },
+      { label: 'New requests', value: count(['submitted']), hint: 'Need a call', filter: 'submitted', color: '#F9A11B', bg: '#FFF4E2' },
+      { label: 'Calls scheduled', value: count(['call_scheduled']), hint: 'Prepare quotes', filter: 'call_scheduled', color: '#0369A1', bg: '#E0F2FE' },
+      { label: 'Waiting on client', value: count(['quote_sent', 'changes_requested', 'quote_accepted']), hint: 'Quote / payment', filter: 'waiting', color: '#6D28D9', bg: '#EDE9FE' },
+      { label: 'Payments to verify', value: toVerify, hint: 'Client says paid', filter: 'verify', color: '#BE123C', bg: '#FFE4E6' },
+      { label: 'In progress', value: count(['advance_paid', 'in_progress']), hint: 'Active projects', filter: 'active', color: '#C2410C', bg: '#FFEDD5' },
+      { label: 'Received', value: inr(r.reduce((s, x) => s + paidTotal(x), 0)), hint: 'All payments', filter: 'paid', color: '#15803D', bg: '#DCFCE7' },
     ];
   }, [rows]);
 
@@ -49,8 +51,9 @@ function RequestsBoard({ name }: { name: string }) {
 
   const visible = (rows ?? []).filter((r) => {
     if (filter === 'paid' && paidTotal(r) <= 0) return false;
+    if (filter === 'verify' && !(r.paymentClaims ?? []).some((c) => !c.verified && !c.rejected)) return false;
     if (groups[filter] && !groups[filter].includes(r.status)) return false;
-    if (!groups[filter] && filter !== 'all' && filter !== 'paid' && r.status !== filter) return false;
+    if (!groups[filter] && !['all', 'paid', 'verify'].includes(filter) && r.status !== filter) return false;
     if (q.trim()) {
       const hay = [r.details?.name, r.details?.business, r.details?.phone, r.details?.email, r.details?.city].join(' ').toLowerCase();
       if (!hay.includes(q.trim().toLowerCase())) return false;
@@ -76,24 +79,31 @@ function RequestsBoard({ name }: { name: string }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {stats.map((s) => (
           <button
             key={s.label}
             type="button"
+            aria-pressed={filter === s.filter}
             onClick={() => setFilter(s.filter)}
-            className={`flex flex-col items-start gap-1 rounded-2xl border bg-white p-4 text-left transition-colors ${
-              filter === s.filter ? 'border-ink' : 'border-sand hover:border-[#c9bca6]'
+            className={`relative flex flex-col items-start gap-1 overflow-hidden rounded-2xl border bg-white p-4 text-left shadow-[0_1px_2px_rgba(60,30,0,0.04)] transition hover:-translate-y-0.5 ${
+              filter === s.filter ? 'border-ink ring-1 ring-ink' : 'border-[#ECE6DC]'
             }`}
           >
-            <span className="text-[13px] font-medium text-muted">{s.label}</span>
-            <span className="font-display text-2xl font-bold">{rows ? s.value : '–'}</span>
-            <span className="text-xs text-soft">{s.hint}</span>
+            <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ background: s.color }} />
+            <span className="flex items-center gap-2 text-[13px] font-medium text-muted">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+              {s.label}
+            </span>
+            <span className="font-display text-[26px] font-bold leading-tight">{rows ? s.value : '–'}</span>
+            <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: s.bg, color: s.color }}>
+              {s.hint}
+            </span>
           </button>
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-3xl border border-sand bg-white p-4 sm:p-5">
+      <div className="flex flex-col gap-3 rounded-3xl border border-[#ECE6DC] bg-white p-4 shadow-[0_1px_2px_rgba(60,30,0,0.04),0_12px_32px_-24px_rgba(60,30,0,0.25)] sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
           <label htmlFor="search" className="sr-only">Search requests</label>
           <input
@@ -153,10 +163,20 @@ function RequestsBoard({ name }: { name: string }) {
                       <Link href={href} className="block">{fmtDate(r.createdAt) || '—'}</Link>
                     </td>
                     <td className="py-3 pr-3">
-                      <Link href={href} className="flex flex-col">
-                        <span className="font-semibold">{r.details?.business || '—'}</span>
-                        <span className="text-[13px] text-muted">
-                          {r.details?.name} · {r.details?.phone}
+                      <Link href={href} className="flex items-center gap-3">
+                        <span aria-hidden="true" className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-peach font-display text-[13px] font-bold text-[#7A4300]">
+                          {(r.details?.business || r.details?.name || '?').trim().slice(0, 2).toUpperCase()}
+                        </span>
+                        <span className="flex flex-col">
+                          <span className="font-semibold">
+                            {r.details?.business || '—'}
+                            {(r.paymentClaims ?? []).some((c) => !c.verified && !c.rejected) && (
+                              <span className="ml-2 rounded-full bg-[#FFE4E6] px-2 py-0.5 text-[11px] font-bold text-[#BE123C]">Verify payment</span>
+                            )}
+                          </span>
+                          <span className="text-[13px] text-muted">
+                            {r.details?.name} · {r.details?.phone}
+                          </span>
                         </span>
                       </Link>
                     </td>

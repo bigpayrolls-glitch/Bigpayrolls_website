@@ -89,3 +89,20 @@ export async function getInternalNotes(id: string): Promise<string> {
 export async function saveInternalNotes(id: string, notes: string) {
   await setDoc(doc(requireDb(), 'internal', id), { notes, updatedAt: serverTimestamp() }, { merge: true });
 }
+
+/** Confirm a payment the client reported: records it as a payment and marks the claim verified. */
+export async function verifyClaim(r: ServiceRequest, index: number) {
+  const claim = (r.paymentClaims ?? [])[index];
+  if (!claim) return;
+  const claims = (r.paymentClaims ?? []).map((c, i) => (i === index ? { ...c, verified: true } : c));
+  const d = claim.at?.toDate?.() ?? new Date();
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  await updateDoc(doc(requireDb(), 'requests', r.id), { paymentClaims: claims });
+  await recordPayment({ ...r, paymentClaims: claims }, { amount: claim.amount, date, mode: claim.mode, reference: claim.utr, note: 'Reported by client' });
+}
+
+/** Dismiss a claim that could not be matched (keeps it in the list as rejected). */
+export async function rejectClaim(r: ServiceRequest, index: number) {
+  const claims = (r.paymentClaims ?? []).map((c, i) => (i === index ? { ...c, verified: false, rejected: true } : c));
+  await updateDoc(doc(requireDb(), 'requests', r.id), { paymentClaims: claims, updatedAt: serverTimestamp() });
+}
