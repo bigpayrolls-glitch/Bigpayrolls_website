@@ -44,6 +44,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return setIsAdmin(false);
+    getProfile(user.uid)
+      .then((p) => setIsAdmin(p?.role === 'admin'))
+      .catch(() => setIsAdmin(false));
+  }, [user]);
+
   const link = (href: string, label: string) => (
     <Link
       href={href}
@@ -65,6 +74,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <nav aria-label="Client" className="flex flex-wrap items-center gap-1">
             {link('/dashboard/', 'Dashboard')}
             {link('/get-started/', 'New request')}
+            {isAdmin && (
+              <Link href="/admin/" className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-[15px] font-bold text-ink">
+                Admin
+              </Link>
+            )}
           </nav>
           <div className="flex items-center gap-3 text-sm">
             {user?.email && <span className="hidden text-muted sm:inline">{user.email}</span>}

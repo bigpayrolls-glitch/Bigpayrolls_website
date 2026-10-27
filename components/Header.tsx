@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getProfile } from '@/lib/data';
 import { useAuth } from './AuthProvider';
 import { ArrowUpRight, Close, Menu } from './Icons';
 
@@ -16,6 +17,16 @@ const NAV = [
 export default function Header() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return setIsAdmin(false);
+    getProfile(user.uid)
+      .then((p) => setIsAdmin(p?.role === 'admin'))
+      .catch(() => setIsAdmin(false));
+  }, [user]);
+  const homeHref = isAdmin ? '/admin/' : '/dashboard/';
+  const homeLabel = isAdmin ? 'Admin' : 'Dashboard';
 
   return (
     <header className="relative z-20 mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-4 px-6 py-4">
@@ -34,8 +45,8 @@ export default function Header() {
 
       <div className="flex items-center gap-2">
         {user ? (
-          <Link href="/dashboard/" className="hidden h-11 items-center rounded-full px-4 text-[15px] font-semibold hover:bg-peach sm:inline-flex">
-            Dashboard
+          <Link href={homeHref} className="hidden h-11 items-center rounded-full px-4 text-[15px] font-semibold hover:bg-peach sm:inline-flex">
+            {homeLabel}
           </Link>
         ) : (
           <Link href="/signin/" className="hidden h-11 items-center rounded-full px-4 text-[15px] font-semibold hover:bg-peach sm:inline-flex">
@@ -69,8 +80,8 @@ export default function Header() {
               {n.label}
             </a>
           ))}
-          <Link href={user ? '/dashboard/' : '/signin/'} className="rounded-2xl px-4 py-3 font-medium hover:bg-peach">
-            {user ? 'Dashboard' : 'Sign in'}
+          <Link href={user ? homeHref : '/signin/'} className="rounded-2xl px-4 py-3 font-medium hover:bg-peach">
+            {user ? homeLabel : 'Sign in'}
           </Link>
           <Link href={user ? '/get-started/' : '/signup/'} className="mt-1 rounded-2xl bg-ink px-4 py-3 text-center font-semibold text-white">
             Get started
