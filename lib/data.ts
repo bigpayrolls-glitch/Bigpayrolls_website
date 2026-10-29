@@ -26,6 +26,19 @@ export type Profile = {
 
 export type QuoteItem = { label: string; amount: number };
 
+/** Recurring maintenance charge, billed separately from the one-time project total. */
+export type Maintenance = {
+  amount: number;
+  cycle: 'monthly' | 'quarterly' | 'yearly';
+  /** When billing starts, e.g. "From the month after the site goes live" */
+  startsFrom?: string;
+  /** What the maintenance covers */
+  includes?: string;
+};
+
+export const CYCLE_LABEL: Record<Maintenance['cycle'], string> = { monthly: 'month', quarterly: 'quarter', yearly: 'year' };
+export const CYCLE_NAME: Record<Maintenance['cycle'], string> = { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' };
+
 export type Quote = {
   items: QuoteItem[];
   total: number;
@@ -33,6 +46,8 @@ export type Quote = {
   advancePercent: number;
   notes?: string;
   timeline?: string;
+  /** Optional recurring maintenance (not part of the one-time total or the advance) */
+  maintenance?: Maintenance | null;
   sentAt?: Timestamp;
 };
 

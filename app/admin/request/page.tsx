@@ -18,7 +18,7 @@ import {
   verifyClaim,
 } from '@/lib/admin';
 import { createInvoice, getSettings, setPaymentLink } from '@/lib/settings';
-import { paidTotal, QUOTE_VISIBLE, type QuoteItem, type ServiceRequest } from '@/lib/data';
+import { CYCLE_LABEL, paidTotal, QUOTE_VISIBLE, type Maintenance, type QuoteItem, type ServiceRequest } from '@/lib/data';
 import { ALL_STATUSES, INDUSTRIES, INTERESTS, PAYMENT_MODES, SERVICES, statusLabel, statusTone } from '@/lib/catalog';
 import { fmtDate, fmtDateTime, inr, todayISO, waLink } from '@/lib/format';
 
@@ -273,6 +273,12 @@ function QuoteBuilder({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }
   const [advance, setAdvance] = useState(String(r.quote?.advancePercent ?? 50));
   const [timeline, setTimeline] = useState(r.quote?.timeline ?? '');
   const [notes, setNotes] = useState(r.quote?.notes ?? '');
+  const m0 = r.quote?.maintenance;
+  const [mOn, setMOn] = useState(!!m0);
+  const [mAmount, setMAmount] = useState(m0 ? String(m0.amount) : '');
+  const [mCycle, setMCycle] = useState<Maintenance['cycle']>(m0?.cycle ?? 'monthly');
+  const [mStart, setMStart] = useState(m0?.startsFrom ?? 'From the month after the site goes live');
+  const [mIncludes, setMIncludes] = useState(m0?.includes ?? 'Hosting, security updates, backups, small content changes and support');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -282,14 +288,17 @@ function QuoteBuilder({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }
   const total = parsed.reduce((s, i) => s + i.amount, 0);
   const adv = Math.min(100, Math.max(0, Number(advance) || 0));
   const sent = QUOTE_VISIBLE.includes(r.status) && !!r.quote?.sentAt;
+  const mAmt = Number(mAmount.replace(/[^\d.]/g, '')) || 0;
+  const maintenance: Maintenance | null = mOn && mAmt > 0 ? { amount: mAmt, cycle: mCycle, startsFrom: mStart.trim(), includes: mIncludes.trim() } : null;
 
   async function save(send: boolean) {
     setMsg('');
     if (!parsed.length) return setMsg('Add at least one item with an amount.');
+    if (mOn && mAmt <= 0) return setMsg('Enter the maintenance amount, or untick maintenance.');
     if (send && !confirmSend()) return;
     setBusy(true);
     try {
-      await saveQuote(r.id, { items: parsed, total, advancePercent: adv, notes: notes.trim(), timeline: timeline.trim() }, send);
+      await saveQuote(r.id, { items: parsed, total, advancePercent: adv, notes: notes.trim(), timeline: timeline.trim(), maintenance }, send);
       setMsg(send ? 'Quote sent. The client can now see it and accept it.' : 'Draft saved (not visible to the client).');
       onSaved();
     } catch {
@@ -354,6 +363,42 @@ function QuoteBuilder({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }
           <input id="qt" className="field field-sm" value={timeline} onChange={(e) => setTimeline(e.target.value)} placeholder="e.g. 12–15 working days" />
         </div>
       </div>
+      <div className="flex flex-col gap-3 rounded-2xl border border-sand p-4">
+        <label className="flex cursor-pointer items-center gap-3">
+          <input type="checkbox" className="h-5 w-5 accent-[#F5A31A]" checked={mOn} onChange={(e) => setMOn(e.target.checked)} />
+          <span>
+            <span className="block font-semibold">Maintenance charges</span>
+            <span className="block text-xs text-muted">Recurring charge after delivery, shown separately from the one-time total.</span>
+          </span>
+        </label>
+        {mOn && (
+          <>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="ma" className="label">Amount (₹)</label>
+                <input id="ma" inputMode="numeric" className="field field-sm text-right" value={mAmount} onChange={(e) => setMAmount(e.target.value)} placeholder="e.g. 1500" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="mc" className="label">Billed</label>
+                <select id="mc" className="field field-sm" value={mCycle} onChange={(e) => setMCycle(e.target.value as Maintenance['cycle'])}>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="ms" className="label">Starts</label>
+                <input id="ms" className="field field-sm" value={mStart} onChange={(e) => setMStart(e.target.value)} placeholder="e.g. After 1 free month" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="mi" className="label">What it includes</label>
+              <input id="mi" className="field field-sm" value={mIncludes} onChange={(e) => setMIncludes(e.target.value)} />
+            </div>
+          </>
+        )}
+      </div>
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor="qn" className="label">Notes for the client</label>
         <textarea
@@ -370,6 +415,11 @@ function QuoteBuilder({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }
         <span className="text-sm">
           Total <strong className="font-display text-xl">{inr(total)}</strong>
           <span className="ml-3 text-muted">Advance {adv}% = {inr((total * adv) / 100)}</span>
+          {maintenance && (
+            <span className="ml-3 text-muted">
+              + Maintenance <strong className="text-ink">{inr(maintenance.amount)}/{CYCLE_LABEL[maintenance.cycle]}</strong>
+            </span>
+          )}
         </span>
       </div>
 

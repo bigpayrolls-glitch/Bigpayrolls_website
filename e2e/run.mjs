@@ -118,6 +118,8 @@ try {
   await admin.fill('#qa-1', '5000');
   await admin.fill('#qt', '12–15 working days');
   await admin.fill('#qn', 'Includes ordering website, admin dashboard and WhatsApp alerts. GST extra.');
+  await admin.getByLabel(/Maintenance charges/).check();
+  await admin.fill('#ma', '1500');
   await admin.getByRole('button', { name: /Send quote to client/ }).click();
   await admin.getByText('Quote sent.', { exact: false }).waitFor({ timeout: 15000 });
   ok('admin sent quote of ₹40,000');
@@ -128,6 +130,7 @@ try {
   await client.getByText('Your quote').waitFor({ timeout: 15000 });
   (await client.getByText('₹40,000').count()) > 0 ? ok('client sees quote total') : bad('client quote total missing');
   (await client.getByText('Thanks Ravi!').count()) > 0 ? ok('client sees admin update') : bad('client update missing');
+  (await client.getByText('₹1,500/month').count()) > 0 ? ok('client sees monthly maintenance') : bad('client maintenance missing');
   await shot(client, 'client-sees-quote');
   await client.getByRole('button', { name: 'Accept quote' }).click();
   await client.getByText('Advance due now').waitFor({ timeout: 15000 });

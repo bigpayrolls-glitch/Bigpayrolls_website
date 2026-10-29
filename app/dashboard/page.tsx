@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import AppShell, { useClientProfile } from '@/components/AppShell';
 import { ArrowRight } from '@/components/Icons';
-import { listMyRequests, QUOTE_VISIBLE, respondToQuote, type ServiceRequest } from '@/lib/data';
+import { CYCLE_LABEL, CYCLE_NAME, listMyRequests, QUOTE_VISIBLE, respondToQuote, type ServiceRequest } from '@/lib/data';
 import { INDUSTRIES, SERVICES, STATUS_FLOW, statusLabel, statusStep, statusTone } from '@/lib/catalog';
 import { fmtDate, fmtDateTime, inr } from '@/lib/format';
 import PayPanel from '@/components/PayPanel';
@@ -181,6 +181,18 @@ function RequestCard({ r, onChange, settings }: { r: ServiceRequest; onChange: (
               </span>
             )}
           </div>
+          {r.quote.maintenance && (
+            <div className="rounded-xl border border-sand p-3 text-sm">
+              <div className="flex justify-between gap-4 font-semibold">
+                <span>{CYCLE_NAME[r.quote.maintenance.cycle]} maintenance</span>
+                <span>
+                  {inr(r.quote.maintenance.amount)}/{CYCLE_LABEL[r.quote.maintenance.cycle]}
+                </span>
+              </div>
+              {r.quote.maintenance.startsFrom && <p className="mt-1 text-muted">{r.quote.maintenance.startsFrom}. Billed separately; not part of the total above.</p>}
+              {r.quote.maintenance.includes && <p className="mt-1 text-muted">Includes: {r.quote.maintenance.includes}</p>}
+            </div>
+          )}
           {r.quote.notes && <p className="whitespace-pre-line rounded-xl bg-cream p-3 text-sm">{r.quote.notes}</p>}
 
           {r.status === 'quote_sent' && (

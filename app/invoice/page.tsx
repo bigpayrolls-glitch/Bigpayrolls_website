@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { getRequest } from '@/lib/admin';
-import { getProfile, paidTotal, type ServiceRequest } from '@/lib/data';
+import { CYCLE_LABEL, CYCLE_NAME, getProfile, paidTotal, type ServiceRequest } from '@/lib/data';
 import { getSettings, type BusinessSettings } from '@/lib/settings';
 import { site } from '@/lib/site';
 import { fmtDate, inr } from '@/lib/format';
@@ -205,6 +205,17 @@ export default function InvoicePage() {
                   <p className="text-muted">{[s.bankName, s.branch].filter(Boolean).join(', ')}</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {r.quote?.maintenance && (
+            <div className="mt-6 rounded-lg border border-sand px-3 py-2.5">
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted">{CYCLE_NAME[r.quote.maintenance.cycle]} maintenance (billed separately)</p>
+              <p className="font-semibold">
+                {inr(r.quote.maintenance.amount)} per {CYCLE_LABEL[r.quote.maintenance.cycle]}
+                {r.quote.maintenance.startsFrom ? ` · ${r.quote.maintenance.startsFrom}` : ''}
+              </p>
+              {r.quote.maintenance.includes && <p className="text-muted">Includes: {r.quote.maintenance.includes}</p>}
             </div>
           )}
 
