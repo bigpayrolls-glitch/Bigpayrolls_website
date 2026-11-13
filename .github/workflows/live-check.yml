@@ -1,0 +1,16 @@
+name: Live landing page check
+on:
+  push:
+    branches: [live-check]
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: npm install --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
+      - run: node e2e/live-check.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: live-shots, path: e2e/shots }
