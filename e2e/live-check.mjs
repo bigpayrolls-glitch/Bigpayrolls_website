@@ -5,7 +5,7 @@ const b = await chromium.launch();
 const ctx = await b.newContext({ ...devices['Pixel 5'] });
 const page = await ctx.newPage();
 const log = [];
-page.on('response', (r) => { if (/firestore|functions\/v1|facebook/.test(r.url())) log.push(`${r.status()} ${r.url().split('?')[0]}`); });
+page.on('response', async (r) => { if (/firestore|functions\/v1|facebook/.test(r.url())) { let b = ''; if (r.url().includes('functions/v1') && r.request().method() === 'POST') b = await r.text().catch(() => ''); log.push(`${r.status()} ${r.url().split('?')[0]} ${b}`); } });
 const cdp = await ctx.newCDPSession(page);
 await cdp.send('Network.enable');
 await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 1.6 * 1024 * 1024 / 8, uploadThroughput: 750 * 1024 / 8 });
@@ -15,7 +15,7 @@ const lcp = await page.evaluate(() => new Promise((ok) => new PerformanceObserve
 console.log(`LIVE slow-4G: load ${Date.now() - t0} ms, largest paint ${lcp} ms`);
 await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
 await page.getByRole('button', { name: 'Allow' }).click();
-await page.fill('#q-name', 'TEST - website check (ignore)');
+await page.fill('#q-name', 'TEST - alert check (ignore)');
 await page.fill('#q-phone', '9000000000');
 await page.locator('#quote label').filter({ hasText: /^Other$/ }).click();
 await page.locator('#quote label').filter({ hasText: /^Not sure$/ }).click();
