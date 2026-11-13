@@ -112,3 +112,26 @@ Services, industries, business types, features, budgets and call slots are all i
 ## Free-tier limits (Firebase Spark)
 
 Hosting: 10 GB storage, 360 MB/day transfer. Firestore: 50,000 reads and 20,000 writes per day. Auth: email and Google login are free. That is plenty for launch; you only need the paid Blaze plan for SMS OTP login or much higher traffic.
+
+## Ad landing page — bigpayrolls.com/website-quote
+
+Fast, no-login "Get a quote" page for Meta ads (website-building service). Light on purpose: no Firebase SDK, no photos to download.
+
+- **Form:** name, mobile / WhatsApp (+91, 10 digits), business type, what they need, optional message, Terms consent. After sending: "Thanks! We'll call you within 24 hours."
+- **Saved to** Firestore `leads` (rules check every field; visitors can create only). **Admin → Enquiries** lists them with Call / WhatsApp buttons, status (New → Called → Quote sent → Won / Not interested), notes and CSV download.
+- **UTM:** `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` (and `fbclid`) are captured on landing (first ad touch kept) and saved with the enquiry.
+- **Meta Pixel** `1677610107402565` loads only after the visitor taps **Allow** in the cookie banner: `PageView` on load, `Lead` only after the enquiry is saved (event id = enquiry id). No names or numbers go to Meta. `NEXT_PUBLIC_META_PIXEL_ID=off` switches it off.
+- **Team alert:** after saving, the page calls the Supabase Edge Function `website-lead` (`supabase/functions/website-lead`), which reads the enquiry back and sends an email (Resend) and, if set up, a WhatsApp message (CallMeBot to your own phone, or the WhatsApp Cloud API with an approved template that has 4 variables: name, mobile, business type, need).
+- **/signup** also works without email or password: it is then saved as an enquiry (Admin → Enquiries) instead of an account. `?interest=tech-build` pre-selects "Website / App".
+
+**Secrets** (GitHub → Settings → Secrets and variables → Actions), published to the function on every deploy:
+
+| Secret | What |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Supabase → Account → Access Tokens → Generate (lets the deploy publish the function) |
+| `RESEND_API_KEY` | Resend → API Keys → Create (Sending access, domain bigpayrolls.com) |
+| `LEAD_ALERT_EMAIL` | Where alerts go, comma-separated |
+| `CALLMEBOT_PHONE`, `CALLMEBOT_APIKEY` | Optional WhatsApp alert to your own number (callmebot.com, free) |
+| `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_TO`, `WHATSAPP_TEMPLATE` | Optional, official WhatsApp Cloud API instead |
+
+Tests: `node --experimental-strip-types e2e/lead-alert.test.mjs` (function), `e2e/rules.test.mjs` (rules), `e2e/landing.test.mjs` (phones, in the End-to-end test workflow).

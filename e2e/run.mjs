@@ -56,7 +56,7 @@ const mk = async () => {
 try {
   // ---- Client signs up and sends a request
   const client = await mk();
-  await signUp(client, { name: 'Ravi Kumar', company: 'Spice Box Kitchen', phone: '9876543210', email: 'ravi@test.com', interest: 'Tech build' });
+  await signUp(client, { name: 'Ravi Kumar', company: 'Spice Box Kitchen', phone: '9876543210', email: 'ravi@test.com', interest: 'Website / App' });
   ok('client signed up and landed on get-started');
   const next = () => client.getByRole('button', { name: /^(Next|Skip for now)$/ }).click();
   await client.getByRole('button', { name: /^Website/ }).click(); await next();

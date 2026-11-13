@@ -92,6 +92,47 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Enquiries from the ad landing page (/website-quote) and the short sign-up, no login needed.
+    // Anyone may create one with exactly these fields; only admins can list, update or delete.
+    // A brand-new enquiry can be read by its id for 15 minutes, so the team-alert function can
+    // email exactly what was saved (the id is random and only the sender knows it).
+    function str(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+    function optStr(d, k, max) {
+      return !(k in d) || str(d[k], 1, max);
+    }
+    function validUtm(u) {
+      return u is map
+        && u.keys().hasOnly(['source', 'medium', 'campaign', 'content', 'term', 'fbclid', 'landing', 'referrer'])
+        && optStr(u, 'source', 100) && optStr(u, 'medium', 100) && optStr(u, 'campaign', 100)
+        && optStr(u, 'content', 100) && optStr(u, 'term', 100) && optStr(u, 'landing', 100) && optStr(u, 'referrer', 100)
+        && (!('fbclid' in u) || u.fbclid is bool);
+    }
+    match /leads/{leadId} {
+      allow create: if leadId.size() == 20
+        && request.resource.data.keys().hasOnly(['source', 'name', 'phone', 'businessType', 'need', 'message',
+             'company', 'email', 'interests', 'companySize', 'utm', 'status', 'consent', 'createdAt'])
+        && request.resource.data.source in ['website-quote', 'signup']
+        && str(request.resource.data.name, 1, 80)
+        && request.resource.data.phone is string && request.resource.data.phone.matches('^[6-9][0-9]{9}$')
+        && request.resource.data.status == 'new'
+        && request.resource.data.consent == true
+        && request.resource.data.createdAt == request.time
+        && (!('businessType' in request.resource.data) || request.resource.data.businessType in ['Shop', 'Restaurant', 'Clinic', 'Startup', 'Services', 'Other'])
+        && (!('need' in request.resource.data) || request.resource.data.need in ['Business website', 'Online shop', 'Landing page', 'Not sure'])
+        && (request.resource.data.source != 'website-quote' || ('businessType' in request.resource.data && 'need' in request.resource.data))
+        && optStr(request.resource.data, 'message', 1000)
+        && optStr(request.resource.data, 'company', 100)
+        && optStr(request.resource.data, 'email', 120)
+        && optStr(request.resource.data, 'companySize', 20)
+        && (!('interests' in request.resource.data) || (request.resource.data.interests is list && request.resource.data.interests.size() <= 10))
+        && (!('utm' in request.resource.data) || validUtm(request.resource.data.utm));
+
+      allow get: if isAdmin() || request.time < resource.data.createdAt + duration.value(15, 'm');
+      allow list, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

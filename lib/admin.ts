@@ -106,3 +106,31 @@ export async function rejectClaim(r: ServiceRequest, index: number) {
   const claims = (r.paymentClaims ?? []).map((c, i) => (i === index ? { ...c, verified: false, rejected: true } : c));
   await updateDoc(doc(requireDb(), 'requests', r.id), { paymentClaims: claims, updatedAt: serverTimestamp() });
 }
+
+// ------------------------------------------------------------------ enquiries (leads)
+export type LeadRow = {
+  id: string;
+  source: 'website-quote' | 'signup';
+  name: string;
+  phone: string;
+  businessType?: string;
+  need?: string;
+  message?: string;
+  company?: string;
+  email?: string;
+  companySize?: string;
+  interests?: string[];
+  utm?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string; fbclid?: boolean; landing?: string; referrer?: string };
+  status: string;
+  note?: string;
+  createdAt?: Timestamp;
+};
+
+export async function listLeads(): Promise<LeadRow[]> {
+  const snap = await getDocs(collection(requireDb(), 'leads'));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<LeadRow, 'id'>) })).sort(byNewest);
+}
+
+export async function updateLead(id: string, patch: { status?: string; note?: string }) {
+  await updateDoc(doc(requireDb(), 'leads', id), { ...patch, updatedAt: serverTimestamp() });
+}

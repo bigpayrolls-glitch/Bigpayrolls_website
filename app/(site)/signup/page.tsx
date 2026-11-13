@@ -10,8 +10,12 @@ import { useAuth } from '@/components/AuthProvider';
 import { auth } from '@/lib/firebase';
 import { getProfile, saveProfile } from '@/lib/data';
 import { COMPANY_SIZES, INTERESTS } from '@/lib/catalog';
+import { submitLead } from '@/lib/leads';
 
-const SHORT: Record<string, string> = { hr: 'HR & payroll', tech: 'Tech build', pfmitra: 'PF Mitra', atg: 'Auto Talent Grid' };
+/** ?interest=… in the link pre-selects an interest (e.g. /signup/?interest=tech-build from website ads). */
+const INTEREST_ALIASES: Record<string, string> = { 'tech-build': 'tech', tech: 'tech', website: 'tech', app: 'tech', hr: 'hr', payroll: 'hr', pfmitra: 'pfmitra', 'pf-mitra': 'pfmitra', atg: 'atg' };
+
+const SHORT: Record<string, string> = { hr: 'HR & payroll', tech: 'Website / App', pfmitra: 'PF Mitra', atg: 'Auto Talent Grid' };
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -29,7 +33,14 @@ export default function SignUpPage() {
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [sentAsEnquiry, setSentAsEnquiry] = useState(false);
   const submitting = useRef(false);
+
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).getAll('interest').flatMap((v) => v.split(','));
+    const ids = want.map((v) => INTEREST_ALIASES[v.trim().toLowerCase()]).filter((v): v is string => !!v);
+    if (ids.length) setInterests((xs) => Array.from(new Set([...xs, ...ids])));
+  }, []);
 
   // Signed-in users with a profile go straight on; signed-in users without one (e.g. first Google login) only fill the profile.
   useEffect(() => {
@@ -56,7 +67,7 @@ export default function SignUpPage() {
     if (!name.trim() || !company.trim()) return 'Enter your name and company name.';
     if (!/^[6-9]\d{9}$/.test(phone.replace(/\D/g, '').slice(-10)) || phone.replace(/\D/g, '').length < 10)
       return 'Enter a valid 10-digit mobile number.';
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return 'Enter a valid email address.';
+    if (email.trim() && !/^\S+@\S+\.\S+$/.test(email.trim())) return 'That email address does not look right.';
     if (!interests.length) return 'Pick at least one thing you are interested in.';
     if (!agree) return 'Please accept the terms to continue.';
     return '';
@@ -77,9 +88,31 @@ export default function SignUpPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!auth) return setError('Login is not connected yet.');
     const v = validateProfile();
     if (v) return setError(v);
+    // No password: send the details as an enquiry. We call them, and they set up the account later.
+    if (!needsProfileOnly && !password) {
+      setBusy(true);
+      try {
+        await submitLead({
+          source: 'signup',
+          name,
+          phone,
+          company,
+          email: email.trim() || undefined,
+          interests,
+          companySize: size ?? undefined,
+        });
+        setSentAsEnquiry(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not send right now. Please try again.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (!auth) return setError('Login is not connected yet.');
+    if (!needsProfileOnly && !email.trim()) return setError('Add your email to create an account, or leave the password empty and we will call you.');
     if (!needsProfileOnly && password.length < 8) return setError('Use a password with at least 8 characters.');
     setBusy(true);
     submitting.current = true;
@@ -123,7 +156,14 @@ export default function SignUpPage() {
         { t: 'Accept, pay and track', d: 'Pay the advance online and follow progress.' },
       ]}
     >
-      {checking ? null : (
+      {sentAsEnquiry ? (
+        <div role="status" className="flex flex-col items-center gap-3 py-8 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F6EC] text-[#1E7B3E]"><Check size={26} /></span>
+          <h2 className="font-display text-2xl font-bold tracking-[-0.02em]">Thanks! We&apos;ll call you within 24 hours.</h2>
+          <p className="max-w-sm text-sm text-muted">When you accept our quote, we&apos;ll send you a link to set your password and track everything online.</p>
+          <Link href="/" className="mt-2 font-semibold underline underline-offset-2">Back to home</Link>
+        </div>
+      ) : checking ? null : (
         <>
           <div className="flex flex-col gap-1">
             <h2 className="font-display text-[26px] font-bold leading-tight tracking-[-0.02em]">
@@ -183,7 +223,7 @@ export default function SignUpPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label htmlFor="email" className="label">Work email *</label>
+                <label htmlFor="email" className="label">Email <span className="font-normal text-muted">(optional)</span></label>
                 <input
                   id="email"
                   type="email"
@@ -196,7 +236,7 @@ export default function SignUpPage() {
               </div>
               {!needsProfileOnly && (
                 <div className="flex flex-col gap-1">
-                  <label htmlFor="password" className="label">Password * <span className="font-normal text-muted">(8+ characters)</span></label>
+                  <label htmlFor="password" className="label">Password <span className="font-normal text-muted">(optional, 8+ characters)</span></label>
                   <input
                     id="password"
                     type="password"
@@ -204,11 +244,13 @@ export default function SignUpPage() {
                     className="field field-sm"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    aria-describedby="pw-hint"
                   />
+                  <span id="pw-hint" className="text-xs text-muted">Leave empty and we&apos;ll call you. You can set it later.</span>
                 </div>
               )}
               <div className="flex flex-col gap-1">
-                <label htmlFor="size" className="label">Number of employees</label>
+                <label htmlFor="size" className="label">Number of employees <span className="font-normal text-muted">(optional)</span></label>
                 <select id="size" className="field field-sm" value={size ?? ''} onChange={(e) => setSize(e.target.value || null)}>
                   <option value="">Select</option>
                   {COMPANY_SIZES.map((s) => (
@@ -252,7 +294,7 @@ export default function SignUpPage() {
 
             {error && <p role="alert" className="text-sm font-medium text-[#B42318]">{error}</p>}
             <button type="submit" disabled={busy} className="h-12 rounded-full bg-ink text-base font-semibold text-white hover:bg-[#2a2a2a] disabled:opacity-60">
-              {busy ? 'Saving…' : needsProfileOnly ? 'Continue' : 'Create account'}
+              {busy ? 'Saving…' : needsProfileOnly ? 'Continue' : password ? 'Create account' : 'Send my details'}
             </button>
           </form>
         </>

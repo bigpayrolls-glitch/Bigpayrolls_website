@@ -52,6 +52,7 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
     </>
   ),
+  leads: <path d="M4 4h16v12H5.2L4 17.2V4Zm4 5h8M8 12h5" />,
   site: <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />,
 };
 
@@ -71,6 +72,7 @@ export default function AdminShell({ children }: { children: (ctx: { name: strin
 
   const nav = [
     { href: '/admin/', label: 'Requests', icon: 'requests', active: pathname === '/admin/' || pathname.startsWith('/admin/request') },
+    { href: '/admin/leads/', label: 'Enquiries', icon: 'leads', active: pathname.startsWith('/admin/leads') },
     { href: '/admin/clients/', label: 'Clients', icon: 'clients', active: pathname.startsWith('/admin/clients') },
     { href: '/admin/settings/', label: 'Settings', icon: 'settings', active: pathname.startsWith('/admin/settings') },
   ];

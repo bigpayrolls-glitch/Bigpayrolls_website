@@ -20,9 +20,13 @@ jobs:
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-bp
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-bp.firebaseapp.com
       - run: npm install --no-save --legacy-peer-deps playwright@1.48.2 firebase-tools@14 @firebase/rules-unit-testing@latest && npx playwright install --with-deps chromium
+      - name: Team-alert function test
+        run: node --experimental-strip-types e2e/lead-alert.test.mjs
       - name: Security rule tests
         run: npx firebase emulators:exec --only firestore --project demo-rules "node e2e/rules.test.mjs"
       - run: (python3 -m http.server 3000 --directory out >/dev/null 2>&1 &) && sleep 2
+      - name: Landing page and short sign-up on phones
+        run: npx firebase emulators:exec --only firestore --project demo-bp "node e2e/landing.test.mjs"
       - run: npx firebase emulators:exec --only auth,firestore --project demo-bp "node e2e/run.mjs"
       - if: always()
         uses: actions/upload-artifact@v4

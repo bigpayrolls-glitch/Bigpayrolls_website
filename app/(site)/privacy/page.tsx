@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Privacy policy' };
 // Template text. Have it reviewed by your legal advisor before going live.
 export default function Privacy() {
   return (
-    <LegalPage title="Privacy policy" updated="27 October 2026">
+    <LegalPage title="Privacy policy" updated="13 November 2026">
       <p>
         This policy explains how {site.legalName} (“Big Payrolls”, “we”, “us”) collects, uses and protects your information when you use{' '}
         {site.domain} and our services.
@@ -15,6 +15,7 @@ export default function Privacy() {
       <h2>Information we collect</h2>
       <ul>
         <li>Account details: name, company name, mobile number, email address.</li>
+        <li>Enquiry details from our quote forms: name, mobile / WhatsApp number, business type, what you need, any message, and which ad or link brought you to us (UTM tags).</li>
         <li>Request details you share: services needed, industry, features, budget, timeline and call preferences.</li>
         <li>Payment details are handled by our payment partner; we do not store your card or UPI details.</li>
         <li>Basic technical data such as browser type and pages visited, used to keep the site secure and working.</li>
@@ -22,14 +23,25 @@ export default function Privacy() {
       <h2>How we use it</h2>
       <ul>
         <li>To create and manage your client account.</li>
-        <li>To contact you about your request, schedule calls and send quotes.</li>
+        <li>To contact you about your request or enquiry (by phone or WhatsApp), schedule calls and send quotes.</li>
+        <li>To see which of our ads and links bring enquiries, so we can improve them.</li>
         <li>To deliver the services you buy and provide support.</li>
         <li>To meet legal and tax obligations.</li>
       </ul>
       <h2>Sharing</h2>
       <p>
         We do not sell your personal information. We share it only with service providers who help us run the website and services
-        (for example hosting, login and payment providers), and when required by law.
+        (for example hosting, login, email and payment providers), and when required by law.
+      </p>
+      <h2 id="cookies">Cookies and advertising</h2>
+      <p>
+        We store small pieces of data in your browser to keep you signed in and to remember which ad or link brought you here. These are
+        needed for the site to work.
+      </p>
+      <p>
+        Only if you allow it in the cookie banner, our website quote page also uses the Meta Pixel to measure which of our Facebook and
+        Instagram ads bring enquiries. It records page visits and that a form was sent, but never your name, mobile number, email or
+        message. To change your choice, clear this site&apos;s data in your browser and choose again.
       </p>
       <h2>Storage and security</h2>
       <p>

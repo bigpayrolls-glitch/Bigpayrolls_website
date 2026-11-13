@@ -72,7 +72,7 @@ export const CALL_MODES = ['Phone call', 'WhatsApp call', 'Google Meet'];
 
 export const INTERESTS = [
   { id: 'hr', t: 'HR and payroll services', d: 'Payroll, PF, ESI, compliance' },
-  { id: 'tech', t: 'Tech build', d: 'Website, app or software' },
+  { id: 'tech', t: 'Website / App', d: 'Website, app or software' },
   { id: 'pfmitra', t: 'PF Mitra', d: 'PF management product' },
   { id: 'atg', t: 'Auto Talent Grid', d: 'AI hiring product' },
 ];

@@ -1,5 +1,5 @@
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc, getDocs, collection, query, where, Timestamp, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, collection, query, where, Timestamp, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 
 const env = await initializeTestEnvironment({ projectId: 'demo-rules', firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: '127.0.0.1', port: 8080 } });
@@ -79,6 +79,33 @@ await t('client cannot set invoice', () => assertFails(updateDoc(doc(alice, 'req
 await t('client cannot set payment link', () => assertFails(updateDoc(doc(alice, 'requests/r7'), { paymentLink: 'https://evil.example' })));
 await t('client cannot create request with invoice', () => assertFails(setDoc(doc(alice, 'requests/r10'), newReq('alice', { invoice: { number: 'X' } }))));
 await t('admin sets invoice and payment link', () => assertSucceeds(updateDoc(doc(admin, 'requests/r7'), { invoice: { number: 'BP/2026-27/0004', date: '2026-10-27' }, paymentLink: 'https://rzp.io/l/x' })));
+
+// Enquiries (leads) from /website-quote and the short sign-up: no login needed
+const lead = (extra = {}) => ({ source: 'website-quote', name: 'Ravi', phone: '9876543210', businessType: 'Shop', need: 'Online shop', status: 'new', consent: true, createdAt: serverTimestamp(), utm: { source: 'facebook', campaign: 'web-nov', fbclid: true }, ...extra });
+const L = (n) => `leads/${String(n).padEnd(20, 'x')}`;
+await t('visitor sends an enquiry without logging in', () => assertSucceeds(setDoc(doc(anon, L('a1')), lead({ message: 'Saree shop' }))));
+await t('sign-up enquiry without email works', () => assertSucceeds(setDoc(doc(anon, L('a2')), { source: 'signup', name: 'Sneha', phone: '9988776655', company: 'Sneha Salon', interests: ['tech'], status: 'new', consent: true, createdAt: serverTimestamp() })));
+await t('enquiry needs a valid Indian mobile', () => assertFails(setDoc(doc(anon, L('a3')), lead({ phone: '12345' }))));
+await t('enquiry needs consent', () => assertFails(setDoc(doc(anon, L('a4')), lead({ consent: false }))));
+await t('enquiry cannot start as "won"', () => assertFails(setDoc(doc(anon, L('a5')), lead({ status: 'won' }))));
+await t('enquiry cannot carry extra fields', () => assertFails(setDoc(doc(anon, L('a6')), lead({ role: 'admin' }))));
+await t('enquiry cannot fake its time', () => assertFails(setDoc(doc(anon, L('a7')), lead({ createdAt: Timestamp.fromDate(new Date('2020-01-01')) }))));
+await t('quote-page enquiry needs business type and need', () => assertFails(setDoc(doc(anon, L('a8')), (({ businessType, need, ...rest }) => rest)(lead()))));
+await t('enquiry business type must be from the list', () => assertFails(setDoc(doc(anon, L('a9')), lead({ businessType: 'Casino' }))));
+await t('enquiry message is limited to 1000 characters', () => assertFails(setDoc(doc(anon, L('b1')), lead({ message: 'x'.repeat(1001) }))));
+await t('UTM values are checked', () => assertFails(setDoc(doc(anon, L('b2')), lead({ utm: { source: 'x'.repeat(101) } }))));
+await t('enquiry id must be 20 characters', () => assertFails(setDoc(doc(anon, 'leads/short'), lead())));
+await t('cannot overwrite an existing enquiry', () => assertFails(setDoc(doc(anon, L('a1')), lead({ name: 'Changed' }))));
+await t('new enquiry can be read by its id (team alert)', () => assertSucceeds(getDoc(doc(anon, L('a1')))));
+await env.withSecurityRulesDisabled((c) => setDoc(doc(c.firestore(), L('old')), lead({ createdAt: Timestamp.fromDate(new Date(Date.now() - 20 * 60000)) })));
+await t('enquiry older than 15 minutes cannot be read by id', () => assertFails(getDoc(doc(anon, L('old')))));
+await t('visitors cannot list enquiries', () => assertFails(getDocs(collection(anon, 'leads'))));
+await t('clients cannot list enquiries', () => assertFails(getDocs(collection(alice, 'leads'))));
+await t('visitors cannot change an enquiry', () => assertFails(updateDoc(doc(anon, L('a1')), { status: 'won' })));
+await t('admin lists enquiries', () => assertSucceeds(getDocs(collection(admin, 'leads'))));
+await t('admin updates status and note', () => assertSucceeds(updateDoc(doc(admin, L('a1')), { status: 'contacted', note: 'Call back Monday', updatedAt: serverTimestamp() })));
+await t('admin reads an old enquiry', () => assertSucceeds(getDoc(doc(admin, L('old')))));
+await t('admin deletes an enquiry', () => assertSucceeds(deleteDoc(doc(admin, L('old')))));
 
 await env.cleanup();
 console.log(`\n${pass} passed, ${fail} failed`);
