@@ -168,7 +168,6 @@ try {
   await admin.fill('#pr', 'pay_TEST2RCPT');
   await admin.getByRole('button', { name: 'Record payment' }).click();
   await admin.getByText('pay_TEST2RCPT').first().waitFor({ timeout: 15000 });
-  admin.once('dialog', (d) => d.accept('Further advance – online ordering website'));
   await admin.getByRole('button', { name: 'Create receipt' }).last().click();
   await admin.getByText(/Advance receipt BP\/RCPT\/\d{4}-\d{2}\/0001 created/).waitFor({ timeout: 15000 });
   ok('admin issued advance receipt BP/RCPT/…/0001');
@@ -246,7 +245,7 @@ try {
   await client.getByRole('link', { name: /Receipt BP\/RCPT\// }).click();
   await client.getByRole('heading', { name: 'RECEIPT' }).waitFor({ timeout: 15000 });
   (await client.getByText('Rupees Ten Thousand Only').count()) > 0 ? ok('receipt shows amount in words') : bad('receipt amount in words missing');
-  (await client.getByText('Further advance – online ordering website').count()) > 0 ? ok('receipt shows "Towards"') : bad('receipt towards missing');
+  (await client.getByText(/^Advance – /).count()) > 0 ? ok('receipt shows "Towards"') : bad('receipt towards missing');
   (await client.getByText('pay_TEST2RCPT').count()) > 0 ? ok('receipt shows payment ID') : bad('receipt payment ID missing');
   await shot(client, 'client-receipt');
   const [dl2] = await Promise.all([client.waitForEvent('download', { timeout: 30000 }), client.getByRole('button', { name: 'Download PDF' }).click()]);
