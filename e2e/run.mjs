@@ -161,6 +161,39 @@ try {
   await admin.getByRole('button', { name: 'Create invoice' }).click();
   await admin.getByText(/Invoice BP\/\d{4}-\d{2}\/0001 created/).waitFor({ timeout: 15000 });
   ok('admin created invoice BP/…/0001');
+
+  // Second payment with an advance receipt, then the invoice is revised to cover only the first payment
+  await admin.fill('#pa', '10000');
+  await admin.selectOption('#pm', 'Card / Razorpay');
+  await admin.fill('#pr', 'pay_TEST2RCPT');
+  await admin.getByRole('button', { name: 'Record payment' }).click();
+  await admin.getByText('pay_TEST2RCPT').first().waitFor({ timeout: 15000 });
+  admin.once('dialog', (d) => d.accept('Further advance – online ordering website'));
+  await admin.getByRole('button', { name: 'Create receipt' }).last().click();
+  await admin.getByText(/Advance receipt BP\/RCPT\/\d{4}-\d{2}\/0001 created/).waitFor({ timeout: 15000 });
+  ok('admin issued advance receipt BP/RCPT/…/0001');
+
+  await admin.getByRole('button', { name: 'Edit invoice details' }).click();
+  await admin.getByLabel('Show “REVISED”').check();
+  await admin.fill('#iv-wo', '2026-10-29');
+  await admin.fill('#iv-at', 'Mr. Ravi Kumar');
+  await admin.fill('#iv-ad', '12, 4th Cross, Nandini Layout\nBengaluru, Karnataka – 560096');
+  await admin.fill('#iv-pn', 'Online ordering & booking website');
+  await admin.fill('#iv-ps', 'Restaurant & cloud kitchen');
+  await admin.fill('#iv-pt', '14 days from advance');
+  await admin.fill('#iv-hd', 'Advance payment – Online ordering website');
+  while (await admin.getByLabel('Remove line 2').count()) await admin.getByLabel('Remove line 2').click();
+  await admin.getByLabel('Line 1', { exact: true }).fill('UI/UX design');
+  await admin.getByLabel('Line 1 description').fill('Home, menu, cart and checkout screens; mobile responsive');
+  await admin.getByLabel('Line 1 amount').fill('12000');
+  await admin.getByRole('button', { name: '+ Add line' }).click();
+  await admin.getByLabel('Line 2', { exact: true }).fill('Website development');
+  await admin.getByLabel('Line 2 amount').fill('8000');
+  await admin.getByRole('checkbox', { name: /pay_TEST2RCPT/ }).uncheck();
+  await admin.getByRole('button', { name: 'Save invoice details' }).click();
+  await admin.getByText('Invoice details saved.').waitFor({ timeout: 15000 });
+  ok('admin saved revised invoice details');
+  await shot(admin, 'admin-invoice-details');
   await admin.fill('#plink', 'https://rzp.io/l/test123');
   await admin.getByRole('button', { name: 'Save link' }).click();
   await admin.getByText('Payment link saved', { exact: false }).waitFor({ timeout: 15000 });
@@ -187,12 +220,37 @@ try {
   await client.getByRole('link', { name: /Invoice BP\// }).click();
   await client.getByRole('heading', { name: 'INVOICE' }).waitFor({ timeout: 15000 });
   ok('client opened invoice');
+  for (const [txt, what] of [
+    ['REVISED', 'revised badge'],
+    ['Advance received', 'status pill'],
+    ['Attn: Mr. Ravi Kumar', 'attention line'],
+    ['Online ordering & booking website', 'project name'],
+    ['Advance payment – Online ordering website', 'heading row'],
+    ['Home, menu, cart and checkout screens; mobile responsive', 'line description'],
+    ['PAYMENTS RECEIVED AGAINST THIS INVOICE', 'payments table'],
+    ['Project payment summary', 'project summary'],
+    ['Supplier not registered under GST', 'GST note'],
+  ]) (await client.getByText(txt, { exact: false }).count()) > 0 ? ok(`invoice shows ${what}`) : bad(`invoice missing ${what}`);
+  const bal = await client.locator('text=Balance due on delivery').locator('..').innerText();
+  bal.includes('₹10,000') ? ok('balance due on delivery = ₹40,000 − ₹30,000') : bad(`balance due on delivery wrong: ${bal}`);
+  const onInv = await client.locator('text=Balance on this invoice').locator('..').innerText();
+  onInv.includes('₹0') ? ok('balance on this invoice ₹0 (₹20,000 lines, ₹20,000 paid)') : bad(`balance on invoice wrong: ${onInv}`);
+  (await client.getByText(/advance receipt BP\/RCPT\//).count()) > 0 ? ok('summary lists the advance receipt') : bad('advance receipt missing from summary');
   await shot(client, 'client-invoice');
   const [dl] = await Promise.all([client.waitForEvent('download', { timeout: 30000 }), client.getByRole('button', { name: 'Download PDF' }).click()]);
   const pdfPath = `${OUT}/invoice.pdf`;
   await dl.saveAs(pdfPath);
   const head = (await import('node:fs')).readFileSync(pdfPath).subarray(0, 5).toString();
   head === '%PDF-' && dl.suggestedFilename().startsWith('Invoice-BP-') ? ok('invoice PDF downloaded: ' + dl.suggestedFilename()) : bad('invoice PDF invalid');
+  await client.goto(`${BASE}/dashboard/`);
+  await client.getByRole('link', { name: /Receipt BP\/RCPT\// }).click();
+  await client.getByRole('heading', { name: 'RECEIPT' }).waitFor({ timeout: 15000 });
+  (await client.getByText('Rupees Ten Thousand Only').count()) > 0 ? ok('receipt shows amount in words') : bad('receipt amount in words missing');
+  (await client.getByText('Further advance – online ordering website').count()) > 0 ? ok('receipt shows "Towards"') : bad('receipt towards missing');
+  (await client.getByText('pay_TEST2RCPT').count()) > 0 ? ok('receipt shows payment ID') : bad('receipt payment ID missing');
+  await shot(client, 'client-receipt');
+  const [dl2] = await Promise.all([client.waitForEvent('download', { timeout: 30000 }), client.getByRole('button', { name: 'Download PDF' }).click()]);
+  dl2.suggestedFilename().startsWith('Receipt-BP-RCPT-') ? ok('receipt PDF downloaded: ' + dl2.suggestedFilename()) : bad('receipt PDF name wrong');
   await client.goto(`${BASE}/dashboard/`);
   await client.getByText('Advance paid').first().waitFor({ timeout: 15000 });
   (await client.getByText('Prefers WhatsApp').count()) === 0 ? ok('team notes hidden from client') : bad('team notes visible to client!');

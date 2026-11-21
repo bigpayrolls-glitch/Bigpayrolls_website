@@ -24,7 +24,7 @@ export type Profile = {
   createdAt?: Timestamp;
 };
 
-export type QuoteItem = { label: string; amount: number };
+export type QuoteItem = { label: string; amount: number; detail?: string };
 
 /** Recurring maintenance charge, billed separately from the one-time project total. */
 export type Maintenance = {
@@ -62,7 +62,38 @@ export type Payment = {
   reference?: string;
   note?: string;
   at: Timestamp;
+  /** Advance receipt issued for this payment, e.g. BP/RCPT/2026-27/0001 */
+  receipt?: { number: string; date: string; towards?: string } | null;
 };
+
+/** One line on the invoice, with an optional smaller description under it. */
+export type InvoiceLine = { label: string; detail?: string; amount: number };
+
+export type Invoice = {
+  number: string;
+  /** yyyy-mm-dd */
+  date: string;
+  createdAt?: Timestamp;
+  /** Shows a REVISED badge */
+  revised?: boolean;
+  /** yyyy-mm-dd */
+  workOrderDate?: string;
+  /** Bill to (defaults to the request's contact details) */
+  billTo?: { name?: string; attn?: string; address?: string; phones?: string; email?: string };
+  /** Project block on the right */
+  project?: { name?: string; subtitle?: string; timeline?: string };
+  /** Bold row above the lines, e.g. "Advance payment – Online ordering website" */
+  heading?: string;
+  /** Lines billed on this invoice. Empty = the quote's items. */
+  lines?: InvoiceLine[];
+  /** Payments this invoice covers (payment keys, see paymentKey). Unset = all payments. */
+  covers?: string[];
+  notes?: string;
+};
+
+/** Stable id for a payment (its recording time), used to link payments to an invoice. */
+export const paymentKey = (p: Pick<Payment, 'at' | 'date' | 'amount' | 'reference'>) =>
+  p.at?.toMillis ? String(p.at.toMillis()) : `${p.date}|${p.amount}|${p.reference ?? ''}`;
 
 export type PaymentClaim = { amount: number; utr: string; mode: string; at: Timestamp; verified?: boolean; rejected?: boolean };
 
@@ -84,7 +115,7 @@ export type ServiceRequest = {
   updates?: RequestUpdate[];
   payments?: Payment[];
   clientResponse?: ClientResponse | null;
-  invoice?: { number: string; date: string; createdAt?: Timestamp } | null;
+  invoice?: Invoice | null;
   /** Razorpay (or other) payment link pasted by the admin */
   paymentLink?: string;
   /** Payments the client says they made, waiting for admin to verify */

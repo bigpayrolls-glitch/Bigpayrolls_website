@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import type { ServiceRequest } from '@/lib/data';
+import { paymentKey, type ServiceRequest } from '@/lib/data';
 import { amountDue, submitPaymentClaim, upiLink, type BusinessSettings } from '@/lib/settings';
 import { fmtDateTime, inr } from '@/lib/format';
 import { ArrowUpRight, Check } from './Icons';
@@ -76,11 +76,18 @@ export default function PayPanel({ r, settings, onChange }: { r: ServiceRequest;
             Paid {inr(due.paid)} of {inr(due.total)}
           </span>
         </div>
-        {r.invoice && (
-          <Link href={`/invoice/?id=${r.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-sand bg-white px-4 text-sm font-semibold hover:bg-peach">
-            Invoice {r.invoice.number} · Download
-          </Link>
-        )}
+        <div className="flex flex-col items-end gap-2">
+          {r.invoice && (
+            <Link href={`/invoice/?id=${r.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-sand bg-white px-4 text-sm font-semibold hover:bg-peach">
+              Invoice {r.invoice.number} · Download
+            </Link>
+          )}
+          {(r.payments ?? []).filter((p) => p.receipt?.number).map((p) => (
+            <Link key={p.receipt!.number} href={`/invoice/?id=${r.id}&receipt=${paymentKey(p)}`} className="text-sm font-semibold underline underline-offset-2">
+              Receipt {p.receipt!.number} ({inr(p.amount)})
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-stone">
