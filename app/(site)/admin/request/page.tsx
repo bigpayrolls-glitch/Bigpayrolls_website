@@ -17,8 +17,9 @@ import {
   rejectClaim,
   verifyClaim,
 } from '@/lib/admin';
-import { createInvoice, getSettings, setPaymentLink } from '@/lib/settings';
-import { CYCLE_LABEL, paidTotal, QUOTE_VISIBLE, type Maintenance, type QuoteItem, type ServiceRequest } from '@/lib/data';
+import { createInvoice, createReceipt, getSettings, saveInvoiceDetails, setPaymentLink } from '@/lib/settings';
+import { CYCLE_LABEL, paidTotal, paymentKey, QUOTE_VISIBLE, type InvoiceLine, type Maintenance, type Payment, type QuoteItem, type ServiceRequest } from '@/lib/data';
+import { invoiceView } from '@/lib/invoice';
 import { ALL_STATUSES, INDUSTRIES, INTERESTS, PAYMENT_MODES, SERVICES, statusLabel, statusTone } from '@/lib/catalog';
 import { fmtDate, fmtDateTime, inr, todayISO, waLink } from '@/lib/format';
 
@@ -472,8 +473,24 @@ function Payments({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }) {
     }
   }
 
+  async function receipt(p: Payment) {
+    const project = r.invoice?.project?.name || r.quote?.items?.[0]?.label || 'the project';
+    const towards = window.prompt('Receipt "Towards" line:', `Advance – ${project}`);
+    if (towards === null) return;
+    setMsg('');
+    try {
+      const st = await getSettings();
+      const n = await createReceipt(r, p, st.invoicePrefix, towards);
+      setMsg(`Advance receipt ${n} created. The client can download it from their dashboard.`);
+      onSaved();
+    } catch {
+      setMsg('Could not create the receipt. Please try again.');
+    }
+  }
+
   async function remove(i: number) {
-    if (!window.confirm('Remove this payment entry?')) return;
+    const p = (r.payments ?? [])[i];
+    if (!window.confirm(p?.receipt?.number ? `Remove this payment? Its receipt ${p.receipt.number} will no longer open.` : 'Remove this payment entry?')) return;
     try {
       await removePayment(r, i);
       onSaved();
@@ -494,13 +511,14 @@ function Payments({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }) {
 
       {(r.payments ?? []).length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-left text-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead>
               <tr className="border-b border-sand text-xs uppercase tracking-wide text-muted">
                 <th className="py-2 pr-3 font-semibold">Date</th>
                 <th className="py-2 pr-3 font-semibold">Mode</th>
                 <th className="py-2 pr-3 font-semibold">Reference</th>
                 <th className="py-2 pr-3 text-right font-semibold">Amount</th>
+                <th className="py-2 pr-3 font-semibold">Receipt</th>
                 <th className="py-2" />
               </tr>
             </thead>
@@ -514,6 +532,13 @@ function Payments({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }) {
                     {p.note ? <span className="block text-xs">{p.note}</span> : null}
                   </td>
                   <td className="py-2.5 pr-3 text-right font-semibold">{inr(p.amount)}</td>
+                  <td className="py-2.5 pr-3">
+                    {p.receipt?.number ? (
+                      <Link href={`/invoice/?id=${r.id}&receipt=${paymentKey(p)}`} className="text-xs font-semibold underline">{p.receipt.number}</Link>
+                    ) : (
+                      <button type="button" onClick={() => receipt(p)} className="text-xs font-semibold underline hover:text-brand-dark">Create receipt</button>
+                    )}
+                  </td>
                   <td className="py-2.5 text-right">
                     <button type="button" onClick={() => remove(i)} className="text-xs font-semibold text-muted underline hover:text-[#B42318]">
                       Remove
@@ -726,6 +751,8 @@ function InvoiceAndLink({ r, onSaved }: { r: ServiceRequest; onSaved: () => void
         )}
       </div>
 
+      {r.invoice && <InvoiceDetails r={r} onSaved={onSaved} />}
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor="plink" className="label">
           Razorpay payment link <span className="font-normal text-muted">(optional, for card / netbanking)</span>
@@ -746,5 +773,152 @@ function InvoiceAndLink({ r, onSaved }: { r: ServiceRequest; onSaved: () => void
       </div>
       {msg && <p role="status" className="text-sm font-medium">{msg}</p>}
     </Panel>
+  );
+}
+
+/* ---------------- Invoice details editor ---------------- */
+
+function InvoiceDetails({ r, onSaved }: { r: ServiceRequest; onSaved: () => void }) {
+  const inv = r.invoice!;
+  const v = invoiceView(r);
+  const [open, setOpen] = useState(false);
+  const [revised, setRevised] = useState(!!inv.revised);
+  const [date, setDate] = useState(inv.date);
+  const [workOrderDate, setWorkOrderDate] = useState(inv.workOrderDate ?? '');
+  const [bill, setBill] = useState(v.billTo);
+  const [project, setProject] = useState(v.project);
+  const [heading, setHeading] = useState(v.heading);
+  const [lines, setLines] = useState<InvoiceLine[]>(v.lines.length ? v.lines.map((l) => ({ ...l })) : [{ label: '', detail: '', amount: 0 }]);
+  const [covers, setCovers] = useState<string[]>(inv.covers ?? (r.payments ?? []).map(paymentKey));
+  const [notes, setNotes] = useState(v.notes);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const lineTotal = lines.reduce((t, l) => t + (Number(l.amount) || 0), 0);
+  const coveredTotal = (r.payments ?? []).filter((p) => covers.includes(paymentKey(p))).reduce((t, p) => t + p.amount, 0);
+  const setLine = (i: number, patch: Partial<InvoiceLine>) => setLines((xs) => xs.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+
+  async function save() {
+    setMsg('');
+    if (!date) return setMsg('Enter the invoice date.');
+    const clean = lines.filter((l) => l.label.trim()).map((l) => ({ label: l.label.trim(), ...(l.detail?.trim() ? { detail: l.detail.trim() } : {}), amount: Math.round(Number(l.amount) || 0) }));
+    if (!clean.length) return setMsg('Add at least one line.');
+    setBusy(true);
+    try {
+      await saveInvoiceDetails(r.id, {
+        date,
+        revised,
+        workOrderDate: workOrderDate || '',
+        billTo: bill,
+        project,
+        heading: heading.trim(),
+        lines: clean,
+        covers,
+        notes: notes.trim(),
+      });
+      setMsg('Invoice details saved.');
+      onSaved();
+    } catch {
+      setMsg('Could not save. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open)
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="self-start rounded-full border border-sand bg-white px-4 py-2 text-sm font-semibold hover:bg-peach">
+        Edit invoice details
+      </button>
+    );
+
+  const F = ({ id, label, children, wide = false }: { id: string; label: string; children: React.ReactNode; wide?: boolean }) => (
+    <div className={`flex flex-col gap-1.5 ${wide ? 'sm:col-span-2' : ''}`}>
+      <label htmlFor={id} className="label">{label}</label>
+      {children}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-line p-4">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">Invoice details</span>
+        <button type="button" onClick={() => setOpen(false)} className="text-sm font-semibold text-muted underline">Close</button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        {F({ id: 'iv-date', label: 'Invoice date', children: <input id="iv-date" type="date" className="field field-sm" value={date} onChange={(e) => setDate(e.target.value)} /> })}
+        {F({ id: 'iv-wo', label: 'Work order date', children: <input id="iv-wo" type="date" className="field field-sm" value={workOrderDate} onChange={(e) => setWorkOrderDate(e.target.value)} /> })}
+        <label className="flex items-center gap-2 self-end pb-3 text-sm font-semibold">
+          <input type="checkbox" checked={revised} onChange={(e) => setRevised(e.target.checked)} className="h-4 w-4 accent-ink" /> Show “REVISED”
+        </label>
+      </div>
+
+      <p className="text-xs font-bold uppercase tracking-wider text-muted">Bill to</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {F({ id: 'iv-bn', label: 'Business name', children: <input id="iv-bn" className="field field-sm" value={bill.name} onChange={(e) => setBill({ ...bill, name: e.target.value })} /> })}
+        {F({ id: 'iv-at', label: 'Attention (Attn:)', children: <input id="iv-at" className="field field-sm" value={bill.attn} onChange={(e) => setBill({ ...bill, attn: e.target.value })} placeholder="Mr. …" /> })}
+        {F({ id: 'iv-ad', label: 'Address (one line per row, with PIN)', wide: true, children: <textarea id="iv-ad" rows={2} className="field text-sm" value={bill.address} onChange={(e) => setBill({ ...bill, address: e.target.value })} /> })}
+        {F({ id: 'iv-ph', label: 'Phone numbers', children: <input id="iv-ph" className="field field-sm" value={bill.phones} onChange={(e) => setBill({ ...bill, phones: e.target.value })} placeholder="+91 … · +91 …" /> })}
+        {F({ id: 'iv-em', label: 'Email', children: <input id="iv-em" className="field field-sm" value={bill.email} onChange={(e) => setBill({ ...bill, email: e.target.value })} /> })}
+      </div>
+
+      <p className="text-xs font-bold uppercase tracking-wider text-muted">Project</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {F({ id: 'iv-pn', label: 'Project name', children: <input id="iv-pn" className="field field-sm" value={project.name} onChange={(e) => setProject({ ...project, name: e.target.value })} placeholder="Online ordering & booking website" /> })}
+        {F({ id: 'iv-ps', label: 'Second line', children: <input id="iv-ps" className="field field-sm" value={project.subtitle} onChange={(e) => setProject({ ...project, subtitle: e.target.value })} placeholder="Hotel, restaurant & cloud kitchen" /> })}
+        {F({ id: 'iv-pt', label: 'Timeline', children: <input id="iv-pt" className="field field-sm" value={project.timeline} onChange={(e) => setProject({ ...project, timeline: e.target.value })} placeholder="14 days from advance" /> })}
+      </div>
+      <p className="-mt-2 text-xs text-muted">Total project value on the invoice is the quote total ({inr(r.quote?.total ?? 0)}). Change it in the quote.</p>
+
+      <p className="text-xs font-bold uppercase tracking-wider text-muted">What this invoice bills</p>
+      {F({ id: 'iv-hd', label: 'Heading row (optional)', children: <input id="iv-hd" className="field field-sm" value={heading} onChange={(e) => setHeading(e.target.value)} placeholder="Advance payment – Online ordering / booking website" /> })}
+      <div className="flex flex-col gap-2">
+        {lines.map((l, i) => (
+          <div key={i} className="grid gap-2 rounded-xl bg-cream p-2.5 sm:grid-cols-[1fr_1fr_130px_auto]">
+            <input aria-label={`Line ${i + 1}`} className="field field-sm" value={l.label} onChange={(e) => setLine(i, { label: e.target.value })} placeholder="UI/UX design" />
+            <input aria-label={`Line ${i + 1} description`} className="field field-sm" value={l.detail ?? ''} onChange={(e) => setLine(i, { detail: e.target.value })} placeholder="Small description (optional)" />
+            <input aria-label={`Line ${i + 1} amount`} inputMode="numeric" className="field field-sm text-right" value={l.amount ? String(l.amount) : ''} onChange={(e) => setLine(i, { amount: Number(e.target.value.replace(/[^\d]/g, '')) || 0 })} placeholder="0" />
+            <button type="button" aria-label={`Remove line ${i + 1}`} onClick={() => setLines((xs) => xs.filter((_, j) => j !== i))} className="px-2 text-sm font-semibold text-muted hover:text-[#B42318]">✕</button>
+          </div>
+        ))}
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setLines((xs) => [...xs, { label: '', detail: '', amount: 0 }])} className="rounded-full border border-sand bg-white px-3.5 py-1.5 text-sm font-semibold">+ Add line</button>
+          <button type="button" onClick={() => setLines((r.quote?.items ?? []).map((q) => ({ label: q.label, detail: q.detail ?? '', amount: q.amount })))} className="rounded-full border border-sand bg-white px-3.5 py-1.5 text-sm font-semibold">Copy lines from quote</button>
+        </div>
+      </div>
+
+      {(r.payments ?? []).length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="label">Payments received against this invoice</span>
+          {(r.payments ?? []).map((p) => {
+            const k = paymentKey(p);
+            return (
+              <label key={k} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="h-4 w-4 accent-ink" checked={covers.includes(k)} onChange={(e) => setCovers((c) => (e.target.checked ? [...c, k] : c.filter((x) => x !== k)))} />
+                {fmtDate(p.date)} · {p.mode} · {p.reference || 'no reference'} · <strong>{inr(p.amount)}</strong>
+                {p.receipt?.number && <span className="text-xs text-muted">(receipt {p.receipt.number})</span>}
+              </label>
+            );
+          })}
+          <span className="text-xs text-muted">Unticked payments appear in the project payment summary instead (with their advance receipt number).</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-2 rounded-xl bg-cream p-3 text-sm">
+        <span>Invoice total <strong className="block text-base">{inr(lineTotal)}</strong></span>
+        <span>Received on it <strong className="block text-base">{inr(coveredTotal)}</strong></span>
+        <span>Balance on invoice <strong className={`block text-base ${lineTotal - coveredTotal < 0 ? 'text-[#B42318]' : ''}`}>{inr(lineTotal - coveredTotal)}</strong></span>
+      </div>
+      {lineTotal - coveredTotal < 0 && <p className="-mt-2 text-xs font-semibold text-[#B42318]">The payments ticked are more than the invoice total. Check the line amounts.</p>}
+
+      {F({ id: 'iv-nt', label: 'Notes', children: <textarea id="iv-nt" rows={3} className="field text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} /> })}
+
+      {msg && <p role="status" className="text-sm font-medium">{msg}</p>}
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={busy} onClick={save} className="h-11 rounded-full bg-ink px-5 font-semibold text-white disabled:opacity-60">{busy ? 'Saving…' : 'Save invoice details'}</button>
+        <Link href={`/invoice/?id=${r.id}`} className="inline-flex h-11 items-center rounded-full border border-sand bg-white px-5 font-semibold">Preview</Link>
+      </div>
+    </div>
   );
 }

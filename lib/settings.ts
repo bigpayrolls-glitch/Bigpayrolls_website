@@ -1,6 +1,6 @@
 // Business settings (payment + invoice details), invoice numbering and client payment claims.
 import { arrayUnion, doc, getDoc, runTransaction, serverTimestamp, setDoc, Timestamp, updateDoc } from 'firebase/firestore';
-import { paidTotal, requireDb, type ServiceRequest } from './data';
+import { paidTotal, paymentKey, requireDb, type Invoice, type Payment, type ServiceRequest } from './data';
 import { site } from './site';
 import { todayISO } from './format';
 
@@ -80,6 +80,41 @@ export async function createInvoice(r: ServiceRequest, prefix: string) {
       updates: arrayUnion({ text: `Invoice ${number} is ready to download.`, at: Timestamp.now(), by: 'Big Payrolls' }),
       updatedAt: serverTimestamp(),
     });
+    return number;
+  });
+}
+
+/** Admin: save the editable invoice details (number and creation time stay as they are). */
+export async function saveInvoiceDetails(id: string, patch: Omit<Invoice, 'number' | 'createdAt'>) {
+  const clean = JSON.parse(JSON.stringify(patch)) as Record<string, unknown>; // drops undefined values
+  const fields: Record<string, unknown> = { updatedAt: serverTimestamp() };
+  for (const [k, v] of Object.entries(clean)) fields[`invoice.${k}`] = v;
+  await updateDoc(doc(requireDb(), 'requests', id), fields);
+}
+
+/**
+ * Admin: issue a numbered advance receipt (e.g. BP/RCPT/2026-27/0001) for one recorded payment.
+ * Safe to press twice: an existing receipt number is kept.
+ */
+export async function createReceipt(r: ServiceRequest, payment: Payment, prefix: string, towards: string) {
+  const db = requireDb();
+  const fy = financialYear();
+  const counterRef = doc(db, 'settings', 'counters');
+  const reqRef = doc(db, 'requests', r.id);
+  const key = paymentKey(payment);
+  return runTransaction(db, async (tx) => {
+    const req = await tx.get(reqRef);
+    const payments = ((req.data()?.payments ?? []) as Payment[]).slice();
+    const i = payments.findIndex((p) => paymentKey(p) === key);
+    if (i < 0) throw new Error('Payment not found. Reload and try again.');
+    if (payments[i]!.receipt?.number) return payments[i]!.receipt!.number;
+    const c = await tx.get(counterRef);
+    const ck = `receipt_${fy.replace('-', '_')}`;
+    const next = ((c.exists() ? (c.data()[ck] as number) : 0) || 0) + 1;
+    const number = `${(prefix || 'BP').trim()}/RCPT/${fy}/${String(next).padStart(4, '0')}`;
+    payments[i] = { ...payments[i]!, receipt: { number, date: todayISO(), towards: towards.trim() } };
+    tx.set(counterRef, { [ck]: next }, { merge: true });
+    tx.update(reqRef, { payments, updatedAt: serverTimestamp() });
     return number;
   });
 }
