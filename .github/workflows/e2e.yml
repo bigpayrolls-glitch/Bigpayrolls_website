@@ -33,3 +33,10 @@ jobs:
         with:
           name: e2e-screenshots
           path: e2e/shots
+      - name: TEMP print invoice shots
+        if: always()
+        run: |
+          for f in e2e/shots/*client-invoice.png e2e/shots/*client-receipt.png e2e/shots/*admin-invoice-details.png; do
+            python3 -c "import sys;from PIL import Image;im=Image.open(sys.argv[1]).convert('RGB');w=900;im=im.resize((w,int(im.height*w/im.width)));im.save(sys.argv[1]+'.jpg',quality=70)" "$f" 2>/dev/null || cp "$f" "$f.jpg"
+            echo "IMG $(basename $f) $(base64 -w0 "$f.jpg")"
+          done
