@@ -204,8 +204,8 @@ try {
   await shot(admin, 'admin-payment-recorded');
 
   await admin.goto(`${BASE}/admin/`);
-  await admin.getByText('₹20,000').first().waitFor({ timeout: 15000 });
-  ok('admin list shows payment');
+  await admin.getByText('₹30,000').first().waitFor({ timeout: 15000 });
+  ok('admin list shows payments received (₹30,000)');
   await shot(admin, 'admin-list-after-payment');
   await admin.goto(`${BASE}/admin/clients/`);
   await admin.getByText('Spice Box Kitchen').first().waitFor({ timeout: 15000 });
