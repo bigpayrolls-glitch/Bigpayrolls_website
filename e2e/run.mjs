@@ -199,7 +199,7 @@ try {
   ok('admin saved Razorpay link');
   await admin.fill('#notes', 'Prefers WhatsApp. Menu Excel coming Friday.');
   await admin.getByRole('button', { name: 'Save notes' }).click();
-  await admin.getByText('Saved.').waitFor({ timeout: 15000 });
+  await admin.getByText('Saved.', { exact: true }).waitFor({ timeout: 15000 });
   ok('admin saved private team notes');
   await shot(admin, 'admin-payment-recorded');
 
