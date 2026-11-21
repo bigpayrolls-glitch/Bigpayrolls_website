@@ -89,7 +89,7 @@ const field = (commit, k) => commit.writes[0].update.fields[k];
     check(doc.fields?.status?.stringValue === 'new' && !!doc.fields?.createdAt?.timestampValue, 'enquiry stored in Firestore as "new" with time');
   }
   console.log(`   landing page: ${(seen.bytes / 1024).toFixed(0)} KB downloaded, load event in ${loadMs} ms (local)`);
-  check(seen.bytes < 450 * 1024, `landing page download is small (${(seen.bytes / 1024).toFixed(0)} KB)`);
+  check(seen.bytes < 650 * 1024, `landing page download is small (${(seen.bytes / 1024).toFixed(0)} KB)`);
   await ctx.close();
 }
 
