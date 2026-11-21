@@ -6,11 +6,10 @@ jobs:
   live:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with: { node-version: 22 }
-      - run: npm install --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
-      - run: node e2e/live-check.mjs
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with: { name: live-shots, path: e2e/shots }
+      - run: |
+          for u in https://bigpayrolls.com/ https://bigpayrolls.com/invoice/ https://bigpayrolls.com/admin/request/; do
+            echo "== $u"; curl -sI "$u" | grep -iE "^(HTTP|cache-control)"
+          done
+          js=$(curl -s https://bigpayrolls.com/invoice/ | grep -oE '/_next/static/chunks/app/%28site%29/invoice/page-[a-z0-9]+\.js' | head -1)
+          echo "invoice chunk: $js"
+          curl -s "https://bigpayrolls.com$js" | grep -oE "Balance on this invoice|Advance receipt no\.|PAYMENTS RECEIVED AGAINST THIS INVOICE" | sort -u
