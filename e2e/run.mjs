@@ -217,7 +217,7 @@ try {
   await client.getByText('Advance paid').first().waitFor({ timeout: 15000 });
   (await client.getByText('Pay online (card, UPI, netbanking)').count()) > 0 ? ok('client sees Pay online button') : bad('Pay online button missing');
   await client.getByRole('link', { name: /Invoice BP\// }).click();
-  await client.getByRole('heading', { name: 'INVOICE' }).waitFor({ timeout: 15000 });
+  await client.getByRole('heading', { name: 'INVOICE', exact: true }).waitFor({ timeout: 15000 });
   ok('client opened invoice');
   for (const [txt, what] of [
     ['REVISED', 'revised badge'],
@@ -243,7 +243,7 @@ try {
   head === '%PDF-' && dl.suggestedFilename().startsWith('Invoice-BP-') ? ok('invoice PDF downloaded: ' + dl.suggestedFilename()) : bad('invoice PDF invalid');
   await client.goto(`${BASE}/dashboard/`);
   await client.getByRole('link', { name: /Receipt BP\/RCPT\// }).click();
-  await client.getByRole('heading', { name: 'RECEIPT' }).waitFor({ timeout: 15000 });
+  await client.getByRole('heading', { name: 'RECEIPT', exact: true }).waitFor({ timeout: 15000 });
   (await client.getByText('Rupees Ten Thousand Only').count()) > 0 ? ok('receipt shows amount in words') : bad('receipt amount in words missing');
   (await client.getByText(/^Advance – /).count()) > 0 ? ok('receipt shows "Towards"') : bad('receipt towards missing');
   (await client.getByText('pay_TEST2RCPT').count()) > 0 ? ok('receipt shows payment ID') : bad('receipt payment ID missing');
