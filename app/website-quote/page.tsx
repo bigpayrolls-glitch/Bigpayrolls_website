@@ -131,6 +131,7 @@ export default function WebsiteQuotePage() {
 
       <footer className="border-t border-sand px-4 py-6 text-center text-[13px] text-muted">
         <p>{site.legalName} · CIN {site.cin}</p>
+        <p className="mt-1">{site.address}{site.phone ? ` · ` : ''}{site.phone && <a href={`tel:${site.phone.replace(/\s/g, '')}`} className="underline">{site.phone}</a>}</p>
         <p className="mt-1"><a href="/terms/" className="underline">Terms</a> · <a href="/privacy/" className="underline">Privacy</a> · <a href="/refund/" className="underline">Refunds</a></p>
       </footer>
     </>

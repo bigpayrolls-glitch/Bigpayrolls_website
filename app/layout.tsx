@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { site } from '@/lib/site';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://bigpayrolls.com'),
@@ -23,6 +24,28 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: '#FFFCF7' };
 
+/** Company details for search engines (schema.org Organization). */
+const org = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: site.name,
+  legalName: site.legalName,
+  alternateName: site.alternateName,
+  url: `https://${site.domain}`,
+  logo: `https://${site.domain}/logo-stacked.png`,
+  identifier: { '@type': 'PropertyValue', propertyID: 'CIN', value: site.cin },
+  telephone: site.phone.replace(/\s/g, ''),
+  ...(site.email ? { email: site.email } : {}),
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: site.postal.street,
+    addressLocality: site.postal.locality,
+    addressRegion: site.postal.region,
+    postalCode: site.postal.postalCode,
+    addressCountry: site.postal.country,
+  },
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -33,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap"
         />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }} />
       </head>
       <body>{children}</body>
     </html>

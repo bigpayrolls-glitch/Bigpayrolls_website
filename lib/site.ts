@@ -1,12 +1,16 @@
 export const site = {
   name: 'Big Payrolls',
   legalName: 'Big Payrolls Solution Private Limited',
+  /** Other name the company trades under */
+  alternateName: 'Big AutoGrid',
   domain: 'bigpayrolls.com',
   // Leave empty until ready: empty values are simply not shown on the site.
-  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || '',
+  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || '+91 90362 10491',
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '',
-  address: '',
+  address: 'No. 27, Abhilasha, 1st Main, 1st Cross, Ekadhanthanaga, Herohalli, Bangalore North, Bengaluru – 560091, Karnataka',
+  /** For search engines (schema.org PostalAddress) */
+  postal: { street: 'No. 27, Abhilasha, 1st Main, 1st Cross, Ekadhanthanaga, Herohalli', locality: 'Bengaluru', region: 'Karnataka', postalCode: '560091', country: 'IN' },
   cin: 'U78100KA2025PTC205573',
   gstin: '',
 };

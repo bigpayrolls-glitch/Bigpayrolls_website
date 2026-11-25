@@ -46,7 +46,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="flex flex-wrap justify-between gap-3 border-t border-[#ead9bc] pt-6 text-sm text-muted">
-          <span>© {new Date().getFullYear()} {site.legalName}</span>
+          <span>© {new Date().getFullYear()} {site.legalName}{site.alternateName ? ` (also trading as ${site.alternateName})` : ''}</span>
           {(site.cin || site.gstin) && (
             <span>{[site.cin && `CIN: ${site.cin}`, site.gstin && `GSTIN: ${site.gstin}`].filter(Boolean).join(' · ')}</span>
           )}

@@ -122,8 +122,8 @@ function From({ s }: { s: BusinessSettings }) {
         <p className="font-bold text-[#1a1a1a]">{site.legalName}</p>
         {site.cin && <p>CIN: {site.cin}</p>}
         {s.gstin && <p>GSTIN: {s.gstin}</p>}
-        {s.invoiceAddress && <p className="whitespace-pre-line">{s.invoiceAddress}</p>}
-        {(s.invoiceEmail || s.invoicePhone) && <p>{[s.invoiceEmail, s.invoicePhone].filter(Boolean).join(' · ')}</p>}
+        {(s.invoiceAddress || site.address) && <p className="max-w-[90mm] whitespace-pre-line">{s.invoiceAddress || site.address}</p>}
+        {(s.invoiceEmail || s.invoicePhone || site.phone) && <p>{[s.invoiceEmail, s.invoicePhone || site.phone].filter(Boolean).join(' · ')}</p>}
         <p>{site.domain}</p>
       </div>
     </div>
