@@ -7,9 +7,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for u in https://bigpayrolls.com/ https://bigpayrolls.com/invoice/ https://bigpayrolls.com/admin/request/; do
-            echo "== $u"; curl -sI "$u" | grep -iE "^(HTTP|cache-control)"
-          done
-          js=$(curl -s https://bigpayrolls.com/invoice/ | grep -oE '/_next/static/chunks/app/%28site%29/invoice/page-[a-z0-9]+\.js' | head -1)
-          echo "invoice chunk: $js"
-          curl -s "https://bigpayrolls.com$js" | grep -oE "Balance on this invoice|Advance receipt no\.|PAYMENTS RECEIVED AGAINST THIS INVOICE" | sort -u
+          curl -s https://bigpayrolls.com/ -o home.html
+          grep -oE "also trading as Big AutoGrid|No\. 27, Abhilasha[^<\"]*560091, Karnataka|tel:[+0-9]+|\"alternateName\":\"[^\"]*\"" home.html | sort -u
